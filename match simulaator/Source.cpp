@@ -1,4 +1,5 @@
 //Created by Ryan Boulds
+//last edited 2-23-24
 #include <iostream>
 #include <vector>
 #include<windows.h>
@@ -23,8 +24,7 @@ void using_index(const vector<S>& vector,
 
 
 // Find squad average MMR score with anti-boosting calculation.
-int findAverageSquadMMR() {
-
+int findAverageSquadMMR(bool antiBoosting) {
 	int numOfPlayersinSquad = 1;
 	int playerMMRinput;
 	int averageMMR = 0;
@@ -42,9 +42,13 @@ int findAverageSquadMMR() {
 		cin >> playerMMRinput;
 		teamMMR.push_back(playerMMRinput);
 
-		if (largestMMRScore < playerMMRinput) {
+
+
+		if (largestMMRScore < playerMMRinput && antiBoosting) {
 			largestMMRScore = playerMMRinput;
 		};
+
+
 	}
 	if (numOfPlayersinSquad != 0) {
 		//Calculate the average MMR of the squad.
@@ -105,21 +109,18 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 	int amountMMRChanged;
 	int streakBonus = 0;
 	int tempVariable = playerMMR;
-	int i = 0;
 	//simplifies for equation
 	int x = MMRChangeLevel;
 
-	
-	//This makes sure that the minimum gained/lost is 25 MMR
-	
-	 
 	//MMR curve that is not adjustable. limit x=110    // ( (x - 40.5) * (x - 180.5) / 123 ) + 64.9
+	//This makes sure that the minimum gained/lost is 25 MMR
 	//if (MMRChangeLevel > 110) { MMRChangeLevel = 110; }
 	//amountMMRChanged = ((x - 40.5) * (x - 180.5) / 123) + 64.9;
 
-	if (MMRChangeLevel > 75) { MMRChangeLevel = 75; }
+	//This makes sure that the minimum gained/lost is 25 MMR
+	if (MMRChangeLevel >= 75) { MMRChangeLevel = 75; }
 	amountMMRChanged = -x + 100;
-	
+
 	if (gamesPlayed > 10) {
 		//Winstreaks factored
 		if (winStreak > 2) {
@@ -166,7 +167,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 		if (rankChecker(playerMMR, MMRChangeLevel) == rankChecker(playerMMR - amountMMRChanged - streakBonus, MMRChangeLevel) || !rankLossPrevention)
 		{
 			playerMMR = playerMMR - amountMMRChanged - streakBonus;
-			
+
 			//comment for testing
 			if (doLongTest == 0) {
 				cout << "subtracted: " << -amountMMRChanged << " bonus " << streakBonus << " MMR\n";
@@ -175,7 +176,8 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 		else { //If derank were to occure without rank loss prevention:
 			//derank
 			if (playerMMR % 100 == 0) {
-
+				
+				int i = 0;
 				do {
 					playerMMR--;
 					i++;
@@ -218,7 +220,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 }
 
 //This fuction is for testing
-int test(int doLongTest) {
+int test(int whichTest) {
 
 	int champion = 0, diamond1 = 0, diamond2 = 0, diamond3 = 0, platinum1 = 0, platinum2 = 0, platinum3 = 0,
 		gold1 = 0, gold2 = 0, gold3 = 0, silver1 = 0, silver2 = 0, silver3 = 0, silver4 = 0, silver5 = 0, bronze1 = 0,
@@ -226,15 +228,16 @@ int test(int doLongTest) {
 
 	int playerMMR, MMRChangeLevel = 0, winStreak = 0, loseStreak = 0, gamesPlayed = 0;
 	int keepTestingThisPlayer = 0;
+	//This is how many games are played
 	int totalNumberOfGamesToPlay = 100;
-	int i = 0;
+	bool keepTesting = 1;
 	int timerDuration = 0;
 	double matchesWon = 0, matchesLost = 0;
 	bool gameWasWon;
 	bool rankLossPrevention = 1;
 	vector<int> output = {};
 
-	while (i < 1) {
+	while (keepTesting) {
 
 		//reset variables
 		if (rankLossPrevention) {
@@ -246,22 +249,22 @@ int test(int doLongTest) {
 			playerMMR = 2500;
 		}
 
-		if (doLongTest != 0) {
+		if (whichTest != 0) {
 			totalNumberOfGamesToPlay = rand() % (200 - 15 + 1) + 15;
 		}
-		if (doLongTest == 1) {
+		if (whichTest == 1) {
 			Sleep(1000);
 		}
 
-
+		//This needs work
 		while (keepTestingThisPlayer < totalNumberOfGamesToPlay) {
 			keepTestingThisPlayer++;
 
-			if (doLongTest == 0) {
+			if (whichTest == 0) {
 				cout << "Are you winning son?" << endl;
 				cin >> gameWasWon;
 			}
-			if (doLongTest != 0) {
+			if (whichTest != 0) {
 				gameWasWon = rand() & 1;
 			}
 			if (gameWasWon == 1) {
@@ -273,7 +276,7 @@ int test(int doLongTest) {
 
 
 			//input: playerMMR, MMRChangeLevel, winStreak, loseStreak, bool gameWasWon, doLongTest gamesPlayed
-			output = endOfMatchMMRTally(playerMMR, MMRChangeLevel, winStreak, loseStreak, gameWasWon, doLongTest, gamesPlayed, rankLossPrevention);
+			output = endOfMatchMMRTally(playerMMR, MMRChangeLevel, winStreak, loseStreak, gameWasWon, whichTest, gamesPlayed, rankLossPrevention);
 			//output: playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed
 
 			playerMMR = output[0];
@@ -285,17 +288,17 @@ int test(int doLongTest) {
 
 
 
-			if (doLongTest == 0) {
+			if (whichTest == 0) {
 				cout << rankChecker(playerMMR, gamesPlayed) << "\nMMR:" << playerMMR << "\nMMR change level: " << MMRChangeLevel << "\nwinstreak: " << winStreak
 					<< "\nLosingstreak: " << loseStreak << "\nGames Played: " << gamesPlayed << endl << endl;
 			}
 		}
-		if (doLongTest == 1) {
+		if (whichTest == 1) {
 			cout << rankChecker(playerMMR, gamesPlayed) << " " << playerMMR << " MMR. W/L " << setprecision(2) << matchesWon / matchesLost << " Matches: " << totalNumberOfGamesToPlay << endl;
 		}
-		
+
 		//Counts ranks
-		if (doLongTest == 2) {
+		if (whichTest == 2) {
 			if (rankChecker(playerMMR, MMRChangeLevel) == "Champion") {
 				champion++;
 			}
@@ -388,13 +391,26 @@ int test(int doLongTest) {
 		} //End of doLongTest == 2
 
 
-	 MMRChangeLevel = 0, winStreak = 0, loseStreak = 0, gamesPlayed = 0, matchesWon = 0, matchesLost = 0, keepTestingThisPlayer = 0;
+		MMRChangeLevel = 0, winStreak = 0, loseStreak = 0, gamesPlayed = 0, matchesWon = 0, matchesLost = 0, keepTestingThisPlayer = 0;
 
-	} //End of keepTesting
+		if (whichTest == 0 && totalNumberOfGamesToPlay == 100) {
+			keepTesting = 0;
+		}
+	} 
 
 
 	return 0;
 }//End of Main
+
+//This is how you change the settings
+vector<int> settings() {
+
+
+
+	//Return results
+	vector<int> result = { };
+	return result;
+}
 
 //This functionn contains a list of commands to control the program
 int listOfCommands() {
@@ -412,6 +428,10 @@ int listOfCommands() {
 
 //This is the main function where you can control the program and what functions are ran
 int main() {
+	//settings: 
+	bool antiBoostingEnabled = 1;
+
+
 	bool infiniteLoop = 1;
 	string command;
 	string temp;
@@ -446,11 +466,15 @@ int main() {
 
 		}
 		else if (command == "average mmr") {
-			cout << findAverageSquadMMR();
+			cout << "Matchmaking will place you in: " << findAverageSquadMMR(antiBoostingEnabled) << " MMR." << endl;;
+			cin.ignore();
 		}
 		else if (command == "help") {
 			cout << endl;
 			listOfCommands();
+		}
+		else if (command == "settings") {
+			settings();
 		}
 		else {
 			cout << "Error! invalid input!";
