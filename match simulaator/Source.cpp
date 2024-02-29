@@ -1,10 +1,13 @@
 //Created by Ryan Boulds
 //last edited 2-23-24
 #include <iostream>
+#include <fstream>  
 #include <vector>
 #include<windows.h>
 #include <iomanip>
+#include <sstream>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/algorithm/count.hpp>
 
 using namespace std;
 
@@ -105,7 +108,7 @@ string rankChecker(int playerMMR, int matchesPlayed) {
 }
 
 //This is the part that calculates a player's MMR score after a game
-vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak, int loseStreak, bool gameWasWon, int doLongTest, int gamesPlayed, bool rankLossPrevention) {
+vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak, int loseStreak, bool gameWasWon, int doLongTest, int gamesPlayed, bool rankLossPrevention, bool streakBonusEnabled) {
 	int amountMMRChanged;
 	int streakBonus = 0;
 	int tempVariable = playerMMR;
@@ -121,7 +124,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 	if (MMRChangeLevel >= 75) { MMRChangeLevel = 75; }
 	amountMMRChanged = -x + 100;
 
-	if (gamesPlayed > 10) {
+	if (gamesPlayed > 10 && streakBonusEnabled) {
 		//Winstreaks factored
 		if (winStreak > 2) {
 			//work on this part.
@@ -176,7 +179,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 		else { //If derank were to occure without rank loss prevention:
 			//derank
 			if (playerMMR % 100 == 0) {
-				
+
 				int i = 0;
 				do {
 					playerMMR--;
@@ -220,7 +223,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 }
 
 //This fuction is for testing
-int test(int whichTest) {
+int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 
 	int champion = 0, diamond1 = 0, diamond2 = 0, diamond3 = 0, platinum1 = 0, platinum2 = 0, platinum3 = 0,
 		gold1 = 0, gold2 = 0, gold3 = 0, silver1 = 0, silver2 = 0, silver3 = 0, silver4 = 0, silver5 = 0, bronze1 = 0,
@@ -234,7 +237,7 @@ int test(int whichTest) {
 	int timerDuration = 0;
 	double matchesWon = 0, matchesLost = 0;
 	bool gameWasWon;
-	bool rankLossPrevention = 1;
+
 	vector<int> output = {};
 
 	while (keepTesting) {
@@ -276,7 +279,7 @@ int test(int whichTest) {
 
 
 			//input: playerMMR, MMRChangeLevel, winStreak, loseStreak, bool gameWasWon, doLongTest gamesPlayed
-			output = endOfMatchMMRTally(playerMMR, MMRChangeLevel, winStreak, loseStreak, gameWasWon, whichTest, gamesPlayed, rankLossPrevention);
+			output = endOfMatchMMRTally(playerMMR, MMRChangeLevel, winStreak, loseStreak, gameWasWon, whichTest, gamesPlayed, rankLossPrevention, streakBonusEnabled);
 			//output: playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed
 
 			playerMMR = output[0];
@@ -396,21 +399,187 @@ int test(int whichTest) {
 		if (whichTest == 0 && totalNumberOfGamesToPlay == 100) {
 			keepTesting = 0;
 		}
-	} 
+	}
 
 
 	return 0;
-}//End of Main
+}//End of Test
+
+
 
 //This is how you change the settings
-vector<int> settings() {
+int settings() {
+	string userInput;
+	string parameter;
+	
+	//Create settings file if it does not already exist.
+	//The settings file contents are copied to the string: settingsFileContents
+	//default settings are in this region:
+	#pragma region
+	// Open: C:\Users\ryant\source\repos\match simulaator\match simulaator
+	ifstream settingsFileExists;
+	settingsFileExists.open("settings.txt");
+	if (!settingsFileExists)
+	{
+		//create a settings file
+		ofstream createSettingsFile("settings.txt");
+
+		//Default settings can be put here:
+		createSettingsFile << "antiBoostingEnabled = 1" << endl;
+		createSettingsFile << "rankLossPrevention = 1" << endl;
+		createSettingsFile << "streakBonusEnabled = 1" << endl;
+
+	}
+		settingsFileExists.close();
+	
+	//Copy settings file to string.
+	ifstream copySettingsToString;
+	copySettingsToString.open("settings.txt"); //open the input file
+	//Copy the contents of the settings file to a string for changing the settings.
+	stringstream strStream;
+	strStream << copySettingsToString.rdbuf(); //read the file
+	string settingsFileContents = strStream.str(); //str holds the content of the file
+	copySettingsToString.close();
+
+	#pragma endregion
+
+
+	//Here is where you can change the settings.
+	bool repeatPrompt = 0;
+	do {
+		//If the user enters something invalid.
+		repeatPrompt = 0;
+		bool errorOccured = 0;
+
+		cout << "What setting would you like to change?: ";
+		cin >> userInput;
+		cin >> parameter;
+		boost::algorithm::to_lower(userInput);
+		boost::algorithm::to_lower(parameter);
+
+
+		cout << parameter;
+
+		if (userInput == "Streakbonus") {
+			if (parameter == "true" || parameter == "1") {
+
+			}
+			else if (parameter == "false" || parameter == "0") {
+			
+			}
+			else {
+				errorOccured = 1;
+			}
+		}
+		else if (userInput == "RankLossPrevention") {
+			if (parameter == "true" || parameter == "1") {
+
+			}
+			else if (parameter == "false" || parameter == "0") {
+
+			}
+			else {
+				errorOccured = 1;
+			}
+		}
+		else if (userInput == "Boosting") {
+			if (parameter == "true" || parameter == "1") {
+
+			}
+			else if (parameter == "false" || parameter == "0") {
+
+			}
+			else {
+				errorOccured = 1;
+			}
+		}
+		else {
+			errorOccured = 1;
+		}
+
+
+		if(errorOccured = 1){
+			cout << "settings list:\n"
+				<< "Streakbonus <true/false>\n"
+				<< "RankLossPrevention <true/false>\n"
+				<< "Anti-Boosting <true/false>\n";
+			repeatPrompt = 1;
+			errorOccured = 0;
+		}
+		//streakBonusEnabled
+		//rankLossPrevention
+		//antiBoostingEnabled
+	} while (repeatPrompt);
+	
 
 
 
-	//Return results
-	vector<int> result = { };
-	return result;
+
+	string settingName = "antiBoostingEnabled";
+	int indexPosition;
+	indexPosition = settingsFileContents.find(settingName);
+	int cnt = settingName.length();
+	//This is where you change the variable
+	settingsFileContents[indexPosition + cnt + 3] = '2';
+
+	
+
+
+
+	
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	//Save by replacing old settings file with updated settings in String.
+	ofstream newSettingsFile("settings.txt");
+	newSettingsFile << settingsFileContents << endl;
+
+	cout << settingsFileContents << "\n"; //print file to console
+
+
+	ifstream settingsFile;
+	settingsFile.open("settings.txt");
+	//search for what characters to load into memory
+	string word;
+	while (settingsFile >> word) {
+		if (word == "antiBoostingEnabled") {
+			settingsFile.ignore(3);
+			settingsFile >> word;
+			
+			// store
+		}
+		else if (word == "rankLossPrevention") {
+			settingsFile.ignore(3);
+			settingsFile >> word;
+			;
+		}
+		else if (word == "streakBonusEnabled") {
+			settingsFile.ignore(3);
+			settingsFile >> word;
+			
+
+		}
+
+		//remove the "2" and replace it with a 1 in the txt document
+	}
+
+
+
+
+
+
+
+
+
+	cout << endl;
+
+	return 0;
 }
+
+
+
+
 
 //This functionn contains a list of commands to control the program
 int listOfCommands() {
@@ -429,9 +598,10 @@ int listOfCommands() {
 //This is the main function where you can control the program and what functions are ran
 int main() {
 	//settings: 
+
 	bool antiBoostingEnabled = 1;
-
-
+	bool rankLossPrevention = 1;
+	bool streakBonusEnabled = 0;
 	bool infiniteLoop = 1;
 	string command;
 	string temp;
@@ -453,13 +623,13 @@ int main() {
 				command = command + " " + temp;
 			}
 			if (command == "test 0") {
-				test(0);
+				test(0, rankLossPrevention, streakBonusEnabled);
 			}
 			if (command == "test 1") {
-				test(1);
+				test(1, rankLossPrevention, streakBonusEnabled);
 			}
 			if (command == "test 2") {
-				test(2);
+				test(2, rankLossPrevention, streakBonusEnabled);
 			}
 			cout << "Error! invalid input!";
 			listOfCommands();
