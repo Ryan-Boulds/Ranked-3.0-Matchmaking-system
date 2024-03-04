@@ -403,7 +403,7 @@ int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 	return 0;
 }//End of Test
 
-
+//subtasks for setSettings
 string changeSetting(string settingName, string settingsFileContents, char trueOrFalse) {
 	int indexPosition;
 	indexPosition = settingsFileContents.find(settingName);
@@ -412,7 +412,6 @@ string changeSetting(string settingName, string settingsFileContents, char trueO
 
 	return settingsFileContents;
 }
-
 
 vector<string> seperateFirstWordFromString(string orignalString) {
 	//Usage:
@@ -435,8 +434,6 @@ vector<string> seperateFirstWordFromString(string orignalString) {
 	return { firstWord, restOfString };
 }
 
-
-//work on this
 vector<string> trueFlaseOrError(string parameter1, string parameter2, string settingsFileContents, string errorOccured) {
 
 	// True, False, or invalid
@@ -461,15 +458,15 @@ vector<string> trueFlaseOrError(string parameter1, string parameter2, string set
 
 //This code can be cleaned up
 //This is how you change the settings
-int setSettings() {
-	string userInput;
+int setSettings(string userInput) {
+	//Settings file location: C:\Users\ryant\source\repos\match simulaator\match simulaator
 	string parameter1 = "", parameter2 = "";
-	bool repeatPrompt = 0;
+
 	//Create settings file if it does not already exist.
-	//The settings file contents are copied to the string: settingsFileContents
+
 	//default settings are in this region:
 #pragma region
-// Open: C:\Users\ryant\source\repos\match simulaator\match simulaator
+//The settings file contents are copied to the string: settingsFileContents
 	ifstream settingsFileExists;
 	settingsFileExists.open("settings.txt");
 	if (!settingsFileExists)
@@ -498,52 +495,47 @@ int setSettings() {
 
 	//Here is where you can change the settings.
 
-	do {
-		//If the user enters something invalid.
-		repeatPrompt = 0;
 		//This is a string instead of bool for later on in the code
-		string errorOccured = "No Error";
+	string errorOccured = "No Error";
 
-		cout << "What setting would you like to change?: ";
-		getline(cin, userInput);
-		boost::algorithm::to_lower(userInput); //makes input case insensitive.
-
-		//seperate userInput into parameter1 and parameter2
-		vector<string> seperatedStrings = seperateFirstWordFromString(userInput);
-		parameter1 = seperatedStrings[0];
-		parameter2 = seperatedStrings[1];
+	//seperate userInput into parameter1 and parameter2
+	vector<string> seperatedStrings = seperateFirstWordFromString(userInput);
+	parameter1 = seperatedStrings[0];
+	parameter2 = seperatedStrings[1];
 
 
-		//If the setting exists, change setting or error for invalid input
-		if (boost::algorithm::contains(settingsFileContents, parameter1)) {
+	//If the setting exists, change setting or error for invalid input
+	if (boost::algorithm::contains(settingsFileContents, parameter1)) {
 
-			vector<string> output = {};
-			output = trueFlaseOrError(parameter1, parameter2, settingsFileContents, errorOccured);
+		vector<string> output = {};
+		output = trueFlaseOrError(parameter1, parameter2, settingsFileContents, errorOccured);
 
-			settingsFileContents = output[0];
-			errorOccured = output[1];
-		}
-		else {
-			errorOccured = "Error";
-		}
+		settingsFileContents = output[0];
+		errorOccured = output[1];
+	}
+	else if(parameter1 == "help"){
+
+	}
+	else {
+		errorOccured = "Error";
+	}
 
 
-		//If an invalid input or help is written, it will help the user
-		if (errorOccured == "Error" || parameter1 == "help") {
-			if (errorOccured == "Error") {
-				cout << "Error!" << endl;;
-			}
-
-			cout << "settings list:\n"
-				<< "streakbonus <true/false>\n"
-				<< "ranklossprevention <true/false>\n"
-				<< "antiboosting <true/false>\n";
-			repeatPrompt = 1;
-			errorOccured = "No Error";
+	//If an invalid input or help is written, it will help the user
+	if (errorOccured == "Error" || parameter1 == "help") {
+		if (errorOccured == "Error") {
+			cout << "Error!" << endl;;
 		}
 
+		cout << "settings list:\n"
+			<< "streakbonus <true/false>\n"
+			<< "ranklossprevention <true/false>\n"
+			<< "antiboosting <true/false>\n";
+		errorOccured = "No Error";
+	}
 
-	} while (repeatPrompt); //If an error occured, then it will repeat.
+
+
 
 	//Save by replacing old settings file with updated settings in String.
 	ofstream newSettingsFile("settings.txt");
@@ -551,7 +543,7 @@ int setSettings() {
 
 	cout << settingsFileContents << "\n"; //print file to console
 
-//End of editing settings
+	//End of editing settings
 
 
 
@@ -595,8 +587,9 @@ int setSettings() {
 //This functionn contains a list of commands to control the program
 int listOfCommands() {
 	cout << "\n\nList of commands:" << endl;
-	cout << "average mmr - Find the average MMR of a squad" << endl;
+	cout << "averagemmr - Find the average MMR of a squad" << endl;
 	cout << "help - shows the list of commands" << endl;
+	cout << "set - Change the settings" << endl;
 	cout << "test # - this will test the machmaking algorithm."
 		<< "\n     test 0 - manually test wins and losses entering 1 for wins and 0 for losses."
 		<< "\n     test 1 - Shows individual player data results from randomly generated match results. Win rates are 50%."
@@ -624,38 +617,47 @@ int main() {
 		//Makes user input all lower case
 		boost::algorithm::to_lower(command);
 
-		//This is where functions are linked based off of where which commnand was entered by the user
-		if (command == "test" || command == "test 0" || command == "test 1" || command == "test 2") {
+		vector<string> seperatedStrings = seperateFirstWordFromString(command);
+		string firstWordOfCommand = seperatedStrings[0];
+		string theRestOfCommand = seperatedStrings[1];
 
-			if (command == "test") {
-				cout << "What test do you want to run? ";
-				cin >> temp;
-				cin.ignore();
-				command = command + " " + temp;
+
+
+		//This is where functions are linked based off of where which commnand was entered by the user
+		if (firstWordOfCommand == "test") {
+
+			if (theRestOfCommand == "") {
+				cout << "Which test would you like to run?\n" <<
+					"0 - Individual games\n1 - Player with 50% win rate over time\n2 - Tally players with 50% win rate over time\ntest ";
+				cin >> theRestOfCommand;
 			}
-			if (command == "test 0") {
+
+			if (theRestOfCommand == "0") {
 				test(0, rankLossPrevention, streakBonusEnabled);
 			}
-			if (command == "test 1") {
+			else if (theRestOfCommand == "1") {
+				cout << "Player with 50% win rate over time:\n";
 				test(1, rankLossPrevention, streakBonusEnabled);
 			}
-			if (command == "test 2") {
+			else if (theRestOfCommand == "2") {
+				cout << "Tally players with 50% win rate over time:\n";
 				test(2, rankLossPrevention, streakBonusEnabled);
 			}
-			cout << "Error! invalid input!";
-			listOfCommands();
-
+			else {
+				cout << "Error! invalid input!";
+				listOfCommands();
+			}
 		}
-		else if (command == "average mmr") {
+		else if (firstWordOfCommand == "averagemmr") {
 			cout << "Matchmaking will place you in: " << findAverageSquadMMR(antiBoostingEnabled) << " MMR." << endl;;
 			cin.ignore();
 		}
-		else if (command == "help") {
+		else if (firstWordOfCommand == "set") {
+			setSettings(theRestOfCommand);
+		}
+		else if (firstWordOfCommand == "help") {
 			cout << endl;
 			listOfCommands();
-		}
-		else if (command == "set") {
-			setSettings();
 		}
 		else {
 			cout << "Error! invalid input!";
