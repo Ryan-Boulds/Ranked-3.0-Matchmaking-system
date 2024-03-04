@@ -1,5 +1,5 @@
 //Created by Ryan Boulds
-//last edited 2-23-24
+//last edited 3-4-24
 #include <iostream>
 #include <fstream>  
 #include <vector>
@@ -24,7 +24,6 @@ void using_index(const vector<S>& vector,
 	}
 	cout << endl;
 }
-
 
 // Find squad average MMR score with anti-boosting calculation.
 int findAverageSquadMMR(bool antiBoosting) {
@@ -218,8 +217,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 	}
 
 	//Return results
-	vector<int> result = { playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed };
-	return result;
+	return { playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed };
 }
 
 //This fuction is for testing
@@ -406,17 +404,72 @@ int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 }//End of Test
 
 
+string changeSetting(string settingName, string settingsFileContents, char trueOrFalse) {
+	int indexPosition;
+	indexPosition = settingsFileContents.find(settingName);
+	int cnt = settingName.length();
+	settingsFileContents[indexPosition + cnt + 3] = trueOrFalse;
 
+	return settingsFileContents;
+}
+
+
+vector<string> seperateFirstWordFromString(string orignalString) {
+	//Usage:
+	//vector<string> seperatedStrings = seperateFirstWordFromString(userInput);
+	//FIRSTWORD = seperatedStrings[0];
+	//THERESTOFTHESTRING = seperatedStrings[1];
+
+	string firstWord, restOfString;
+	int i = 0;
+	while (i < orignalString.length() && orignalString[i] != ' ' && orignalString.length() > 0) {
+
+		firstWord = firstWord + orignalString[i];
+		i++;
+	}
+
+	if (orignalString.length() > i) {
+		restOfString = orignalString.substr(i + 1);
+	}
+
+	return { firstWord, restOfString };
+}
+
+
+//work on this
+vector<string> trueFlaseOrError(string parameter1, string parameter2, string settingsFileContents, string errorOccured) {
+
+	// True, False, or invalid
+	if (parameter2 == "true" || parameter2 == "1" || parameter2 == "enable") {
+		//streakbonus true
+		settingsFileContents = changeSetting(parameter1, settingsFileContents, '1');
+	}
+	else if (parameter2 == "false" || parameter2 == "0" || parameter2 == "disable") {
+		//streakbonus false
+		settingsFileContents = changeSetting(parameter1, settingsFileContents, '0');
+	}
+	else {
+		//streakbonus ????
+		errorOccured = "Error";
+	}
+
+	vector<string> result = { settingsFileContents, errorOccured };
+
+	return result;
+
+}
+
+//This code can be cleaned up
 //This is how you change the settings
-int settings() {
+int setSettings() {
 	string userInput;
-	string parameter;
-	
+	string parameter1 = "", parameter2 = "";
+	bool repeatPrompt = 0;
 	//Create settings file if it does not already exist.
 	//The settings file contents are copied to the string: settingsFileContents
 	//default settings are in this region:
-	#pragma region
-	// Open: C:\Users\ryant\source\repos\match simulaator\match simulaator
+#pragma region
+// Open: C:\Users\ryant\source\repos\match simulaator\match simulaator
 	ifstream settingsFileExists;
 	settingsFileExists.open("settings.txt");
 	if (!settingsFileExists)
@@ -425,13 +478,13 @@ int settings() {
 		ofstream createSettingsFile("settings.txt");
 
 		//Default settings can be put here:
-		createSettingsFile << "antiBoostingEnabled = 1" << endl;
-		createSettingsFile << "rankLossPrevention = 1" << endl;
-		createSettingsFile << "streakBonusEnabled = 1" << endl;
+		createSettingsFile << "antiboosting = 1" << endl;
+		createSettingsFile << "ranklossprevention = 1" << endl;
+		createSettingsFile << "streakbonus = 1" << endl;
 
 	}
-		settingsFileExists.close();
-	
+	settingsFileExists.close();
+
 	//Copy settings file to string.
 	ifstream copySettingsToString;
 	copySettingsToString.open("settings.txt"); //open the input file
@@ -441,101 +494,66 @@ int settings() {
 	string settingsFileContents = strStream.str(); //str holds the content of the file
 	copySettingsToString.close();
 
-	#pragma endregion
-
+#pragma endregion
 
 	//Here is where you can change the settings.
-	bool repeatPrompt = 0;
+
 	do {
 		//If the user enters something invalid.
 		repeatPrompt = 0;
-		bool errorOccured = 0;
+		//This is a string instead of bool for later on in the code
+		string errorOccured = "No Error";
 
 		cout << "What setting would you like to change?: ";
-		cin >> userInput;
-		cin >> parameter;
-		boost::algorithm::to_lower(userInput);
-		boost::algorithm::to_lower(parameter);
+		getline(cin, userInput);
+		boost::algorithm::to_lower(userInput); //makes input case insensitive.
+
+		//seperate userInput into parameter1 and parameter2
+		vector<string> seperatedStrings = seperateFirstWordFromString(userInput);
+		parameter1 = seperatedStrings[0];
+		parameter2 = seperatedStrings[1];
 
 
-		cout << parameter;
+		//If the setting exists, change setting or error for invalid input
+		if (boost::algorithm::contains(settingsFileContents, parameter1)) {
 
-		if (userInput == "Streakbonus") {
-			if (parameter == "true" || parameter == "1") {
+			vector<string> output = {};
+			output = trueFlaseOrError(parameter1, parameter2, settingsFileContents, errorOccured);
 
-			}
-			else if (parameter == "false" || parameter == "0") {
-			
-			}
-			else {
-				errorOccured = 1;
-			}
-		}
-		else if (userInput == "RankLossPrevention") {
-			if (parameter == "true" || parameter == "1") {
-
-			}
-			else if (parameter == "false" || parameter == "0") {
-
-			}
-			else {
-				errorOccured = 1;
-			}
-		}
-		else if (userInput == "Boosting") {
-			if (parameter == "true" || parameter == "1") {
-
-			}
-			else if (parameter == "false" || parameter == "0") {
-
-			}
-			else {
-				errorOccured = 1;
-			}
+			settingsFileContents = output[0];
+			errorOccured = output[1];
 		}
 		else {
-			errorOccured = 1;
+			errorOccured = "Error";
 		}
 
 
-		if(errorOccured = 1){
+		//If an invalid input or help is written, it will help the user
+		if (errorOccured == "Error" || parameter1 == "help") {
+			if (errorOccured == "Error") {
+				cout << "Error!" << endl;;
+			}
+
 			cout << "settings list:\n"
-				<< "Streakbonus <true/false>\n"
-				<< "RankLossPrevention <true/false>\n"
-				<< "Anti-Boosting <true/false>\n";
+				<< "streakbonus <true/false>\n"
+				<< "ranklossprevention <true/false>\n"
+				<< "antiboosting <true/false>\n";
 			repeatPrompt = 1;
-			errorOccured = 0;
+			errorOccured = "No Error";
 		}
-		//streakBonusEnabled
-		//rankLossPrevention
-		//antiBoostingEnabled
-	} while (repeatPrompt);
-	
 
 
-
-
-	string settingName = "antiBoostingEnabled";
-	int indexPosition;
-	indexPosition = settingsFileContents.find(settingName);
-	int cnt = settingName.length();
-	//This is where you change the variable
-	settingsFileContents[indexPosition + cnt + 3] = '2';
-
-	
-
-
-
-	
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	} while (repeatPrompt); //If an error occured, then it will repeat.
 
 	//Save by replacing old settings file with updated settings in String.
 	ofstream newSettingsFile("settings.txt");
-	newSettingsFile << settingsFileContents << endl;
+	newSettingsFile << settingsFileContents;
 
 	cout << settingsFileContents << "\n"; //print file to console
+
+//End of editing settings
+
+
 
 
 	ifstream settingsFile;
@@ -546,7 +564,7 @@ int settings() {
 		if (word == "antiBoostingEnabled") {
 			settingsFile.ignore(3);
 			settingsFile >> word;
-			
+
 			// store
 		}
 		else if (word == "rankLossPrevention") {
@@ -557,7 +575,7 @@ int settings() {
 		else if (word == "streakBonusEnabled") {
 			settingsFile.ignore(3);
 			settingsFile >> word;
-			
+
 
 		}
 
@@ -566,17 +584,10 @@ int settings() {
 
 
 
-
-
-
-
-
-
 	cout << endl;
 
 	return 0;
 }
-
 
 
 
@@ -643,8 +654,8 @@ int main() {
 			cout << endl;
 			listOfCommands();
 		}
-		else if (command == "settings") {
-			settings();
+		else if (command == "set") {
+			setSettings();
 		}
 		else {
 			cout << "Error! invalid input!";
