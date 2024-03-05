@@ -25,6 +25,19 @@ void using_index(const vector<S>& vector,
 	cout << endl;
 }
 
+//default settings can be set here:
+int createDefaultSettingsFile() {
+	ofstream createSettingsFile("settings.txt");
+
+	//Default settings can be put here:
+	createSettingsFile << "antiboosting = 1" << endl;
+	createSettingsFile << "ranklossprevention = 1" << endl;
+	createSettingsFile << "streakbonus = 1" << endl;
+	createSettingsFile.close();
+	return 0;
+}
+
+
 // Find squad average MMR score with anti-boosting calculation.
 int findAverageSquadMMR(bool antiBoosting) {
 	int numOfPlayersinSquad = 1;
@@ -235,6 +248,7 @@ int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 	int timerDuration = 0;
 	double matchesWon = 0, matchesLost = 0;
 	bool gameWasWon;
+	string userInputDuringTest;
 
 	vector<int> output = {};
 
@@ -261,9 +275,22 @@ int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 		while (keepTestingThisPlayer < totalNumberOfGamesToPlay) {
 			keepTestingThisPlayer++;
 
+			//Ask the user if the game was won or loss
 			if (whichTest == 0) {
 				cout << "Are you winning son?" << endl;
-				cin >> gameWasWon;
+				cin >> userInputDuringTest;
+				boost::algorithm::to_lower(userInputDuringTest);
+				if (userInputDuringTest == "yes" || userInputDuringTest == "win" || userInputDuringTest == "1") {
+					gameWasWon = 1;
+				}
+				else if (userInputDuringTest == "no" || userInputDuringTest == "loss" || userInputDuringTest == "0") {
+					gameWasWon = 0;
+				}
+				else {
+					cout << "Ending test..." << endl;
+					break;
+				}
+
 			}
 			if (whichTest != 0) {
 				gameWasWon = rand() & 1;
@@ -456,6 +483,35 @@ vector<string> trueFlaseOrError(string parameter1, string parameter2, string set
 
 }
 
+string settingsFileContentsToString() {
+	//Copy settings file to string.
+	ifstream copySettingsToString;
+	copySettingsToString.open("settings.txt"); //open the input file
+	//Copy the contents of the settings file to a string for changing the settings.
+	stringstream strStream;
+	strStream << copySettingsToString.rdbuf(); //read the file
+	string settingsFileContents = strStream.str(); //str holds the content of the file
+	copySettingsToString.close();
+
+	return settingsFileContents;
+}
+
+int pullVariableFromSettings(string settingName) {
+	//This assumes that the setting exists:
+	string settings = settingsFileContentsToString();
+
+	int indexPosition;
+	indexPosition = settings.find(settingName);
+	int cnt = settingName.length();
+	char charResult = settings[indexPosition + cnt + 3];
+
+	//convert result to int:
+	int intResult = charResult - '0';
+
+	return intResult;
+
+}
+
 //This code can be cleaned up
 //This is how you change the settings
 int setSettings(string userInput) {
@@ -472,30 +528,18 @@ int setSettings(string userInput) {
 	if (!settingsFileExists)
 	{
 		//create a settings file
-		ofstream createSettingsFile("settings.txt");
-
-		//Default settings can be put here:
-		createSettingsFile << "antiboosting = 1" << endl;
-		createSettingsFile << "ranklossprevention = 1" << endl;
-		createSettingsFile << "streakbonus = 1" << endl;
+		createDefaultSettingsFile();
 
 	}
 	settingsFileExists.close();
-
-	//Copy settings file to string.
-	ifstream copySettingsToString;
-	copySettingsToString.open("settings.txt"); //open the input file
-	//Copy the contents of the settings file to a string for changing the settings.
-	stringstream strStream;
-	strStream << copySettingsToString.rdbuf(); //read the file
-	string settingsFileContents = strStream.str(); //str holds the content of the file
-	copySettingsToString.close();
-
 #pragma endregion
+
+	string settingsFileContents = settingsFileContentsToString();
+
 
 	//Here is where you can change the settings.
 
-		//This is a string instead of bool for later on in the code
+	//This is a string instead of bool for later on in the code
 	string errorOccured = "No Error";
 
 	//seperate userInput into parameter1 and parameter2
@@ -513,8 +557,28 @@ int setSettings(string userInput) {
 		settingsFileContents = output[0];
 		errorOccured = output[1];
 	}
-	else if(parameter1 == "help"){
 
+	else if (parameter1 == "reset") {
+		string resetComfirmation = "";
+		cout << "Are you sure that you want to revert all settigns back to defaults? y/n" << endl;
+		cin >> resetComfirmation;
+
+		//This is for solving a problem
+		cin.ignore();
+
+		boost::algorithm::to_lower(resetComfirmation);
+
+		if (resetComfirmation == "y" || resetComfirmation == "yes") {
+			createDefaultSettingsFile();
+			cout << "The settings were reverted back to default." << endl;
+		}
+		else {
+			cout << "The settings were not changed back to default." << endl;
+		}
+
+	}
+	else if (parameter1 == "help") {
+		//do nothing here
 	}
 	else {
 		errorOccured = "Error";
@@ -524,7 +588,7 @@ int setSettings(string userInput) {
 	//If an invalid input or help is written, it will help the user
 	if (errorOccured == "Error" || parameter1 == "help") {
 		if (errorOccured == "Error") {
-			cout << "Error!" << endl;;
+			cout << "Error!\n" << endl;;
 		}
 
 		cout << "settings list:\n"
@@ -535,62 +599,25 @@ int setSettings(string userInput) {
 	}
 
 
-
-
 	//Save by replacing old settings file with updated settings in String.
-	ofstream newSettingsFile("settings.txt");
-	newSettingsFile << settingsFileContents;
+	ofstream updatSettingsFile("settings.txt");
+	updatSettingsFile << settingsFileContents;
+	updatSettingsFile.close();
 
-	cout << settingsFileContents << "\n"; //print file to console
-
+	cout << "Current settings list:\n" << settingsFileContents << endl; //print file to console
 	//End of editing settings
-
-
-
-
-	ifstream settingsFile;
-	settingsFile.open("settings.txt");
-	//search for what characters to load into memory
-	string word;
-	while (settingsFile >> word) {
-		if (word == "antiBoostingEnabled") {
-			settingsFile.ignore(3);
-			settingsFile >> word;
-
-			// store
-		}
-		else if (word == "rankLossPrevention") {
-			settingsFile.ignore(3);
-			settingsFile >> word;
-			;
-		}
-		else if (word == "streakBonusEnabled") {
-			settingsFile.ignore(3);
-			settingsFile >> word;
-
-
-		}
-
-		//remove the "2" and replace it with a 1 in the txt document
-	}
-
-
-
-	cout << endl;
 
 	return 0;
 }
 
 
-
-
 //This functionn contains a list of commands to control the program
-int listOfCommands() {
-	cout << "\n\nList of commands:" << endl;
+int listOfMainCommands() {
+	cout << "\nList of commands:" << endl;
 	cout << "averagemmr - Find the average MMR of a squad" << endl;
 	cout << "help - shows the list of commands" << endl;
-	cout << "set - Change the settings" << endl;
-	cout << "test # - this will test the machmaking algorithm."
+	cout << "set <setting parameter> <true/false> - Change the settings" << endl;
+	cout << "test <#> - this will test the machmaking algorithm."
 		<< "\n     test 0 - manually test wins and losses entering 1 for wins and 0 for losses."
 		<< "\n     test 1 - Shows individual player data results from randomly generated match results. Win rates are 50%."
 		<< "\n     test 2 - Same as test 1, but tallies final results overtime in with 10,000 players per cycle." << endl;
@@ -602,14 +629,15 @@ int listOfCommands() {
 //This is the main function where you can control the program and what functions are ran
 int main() {
 	//settings: 
-
-	bool antiBoostingEnabled = 1;
-	bool rankLossPrevention = 1;
-	bool streakBonusEnabled = 0;
 	bool infiniteLoop = 1;
-	string command;
-	string temp;
 	while (infiniteLoop) {
+		bool antiBoostingEnabled = pullVariableFromSettings("antiboosting");
+		bool rankLossPrevention = pullVariableFromSettings("ranklossprevention");
+		bool streakBonusEnabled = pullVariableFromSettings("streakbonus");
+
+		string command;
+		string temp;
+
 
 		//Get input from the user
 		cout << "What command would you like to run? ";
@@ -645,8 +673,9 @@ int main() {
 			}
 			else {
 				cout << "Error! invalid input!";
-				listOfCommands();
+				listOfMainCommands();
 			}
+			cin.ignore();
 		}
 		else if (firstWordOfCommand == "averagemmr") {
 			cout << "Matchmaking will place you in: " << findAverageSquadMMR(antiBoostingEnabled) << " MMR." << endl;;
@@ -654,16 +683,15 @@ int main() {
 		}
 		else if (firstWordOfCommand == "set") {
 			setSettings(theRestOfCommand);
+
 		}
 		else if (firstWordOfCommand == "help") {
-			cout << endl;
-			listOfCommands();
+			listOfMainCommands();
 		}
 		else {
 			cout << "Error! invalid input!";
-			listOfCommands();
+			listOfMainCommands();
 		}
-
 		cout << endl;
 	}
 
