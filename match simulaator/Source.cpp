@@ -9,6 +9,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/count.hpp>
 
+
 using namespace std;
 
 //Making a way to use vectors ()
@@ -424,6 +425,16 @@ int test(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 		if (whichTest == 0 && totalNumberOfGamesToPlay == 100) {
 			keepTesting = 0;
 		}
+
+		
+
+		
+		//
+		if(GetAsyncKeyState(VK_ESCAPE))
+		{
+			keepTesting = 0;
+		}
+
 	}
 
 
@@ -562,20 +573,17 @@ int setSettings(string userInput) {
 		string resetComfirmation = "";
 		cout << "Are you sure that you want to revert all settigns back to defaults? y/n" << endl;
 		cin >> resetComfirmation;
-
-		//This is for solving a problem
-		cin.ignore();
-
 		boost::algorithm::to_lower(resetComfirmation);
 
 		if (resetComfirmation == "y" || resetComfirmation == "yes") {
 			createDefaultSettingsFile();
-			cout << "The settings were reverted back to default." << endl;
+			cout << "\nThe settings were reverted back to default." << endl;
 		}
 		else {
-			cout << "The settings were not changed back to default." << endl;
+			cout << "\nThe settings were not changed back to default." << endl;
 		}
-
+		//This is for solving a problem
+		cin.ignore();
 	}
 	else if (parameter1 == "help") {
 		//do nothing here
@@ -598,14 +606,17 @@ int setSettings(string userInput) {
 		errorOccured = "No Error";
 	}
 
-
+	if(parameter1 != "reset"){
 	//Save by replacing old settings file with updated settings in String.
 	ofstream updatSettingsFile("settings.txt");
 	updatSettingsFile << settingsFileContents;
 	updatSettingsFile.close();
+	}
+	
+	cout << settingsFileContentsToString();
 
-	cout << "Current settings list:\n" << settingsFileContents << endl; //print file to console
-	//End of editing settings
+
+
 
 	return 0;
 }
@@ -662,6 +673,7 @@ int main() {
 
 			if (theRestOfCommand == "0") {
 				test(0, rankLossPrevention, streakBonusEnabled);
+				cin.ignore();
 			}
 			else if (theRestOfCommand == "1") {
 				cout << "Player with 50% win rate over time:\n";
@@ -670,12 +682,14 @@ int main() {
 			else if (theRestOfCommand == "2") {
 				cout << "Tally players with 50% win rate over time:\n";
 				test(2, rankLossPrevention, streakBonusEnabled);
+				
 			}
 			else {
 				cout << "Error! invalid input!";
 				listOfMainCommands();
+				cin.ignore();
 			}
-			cin.ignore();
+			
 		}
 		else if (firstWordOfCommand == "averagemmr") {
 			cout << "Matchmaking will place you in: " << findAverageSquadMMR(antiBoostingEnabled) << " MMR." << endl;;
