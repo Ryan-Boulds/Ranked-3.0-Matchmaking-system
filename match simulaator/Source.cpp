@@ -1,8 +1,8 @@
 //Created by Ryan Boulds
-//last edited 3-14-24
+//last edited 3-16-24
 #include <iostream>
 #include <fstream> 
-#include <array>
+//#include <array> //unused rn
 #include <vector>
 #include<windows.h>
 #include <iomanip>
@@ -10,44 +10,39 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/count.hpp>
 
-
 using namespace std;
 
-//Making a way to use vectors ()
-template <typename S>
-void using_index(const vector<S>& vector,
-	string sep = " ")
-{
-	// Iterating vector by using index
-	for (int i = 0; i < vector.size(); i++) {
-		// Printing the element at
-		// index 'i' of vector
-		cout << vector[i] << sep;
-	}
-	cout << endl;
-}
-
-//default settings can be set here:
+// Default settings can be set here:  //This is where the settings file is created.
 int createDefaultSettingsFile() {
 	ofstream createSettingsFile("settings.txt");
-
+	//information
+	createSettingsFile << "Index: bool = b, int = i, double = d, char = c, string = s\n";
 	//Default settings can be put here:
-	createSettingsFile << "antiboosting = 1" << endl;
-	createSettingsFile << "ranklossprevention = 1" << endl;
-	createSettingsFile << "streakbonus = 1" << endl;
-	createSettingsFile << "mmrlimit = 700" << endl; //work on this
+	createSettingsFile << "b antiboosting = 1 " << endl;
+	createSettingsFile << "b ranklossprevention = 1 " << endl;
+	createSettingsFile << "b streakbonus = 1 " << endl;
+	createSettingsFile << "i mmrlimit = 700 " << endl; //work on this
 
 	createSettingsFile.close();
 	return 0;
 }
 
+// This runs anytime that the program wants to confirm if the settings file exists. 
+int checkIfSettingsFileExists() {
+	//The settings file contents are copied to the string: settingsFileContents
+	ifstream settingsFileExists;
+	settingsFileExists.open("settings.txt");
+	if (!settingsFileExists)
+	{
+		//create a settings file
+		createDefaultSettingsFile();
+	}
+	settingsFileExists.close();
+	return 0;
+}
 
-
-
-
-
-// Find squad average MMR score with anti-boosting calculation.
-int findAverageSquadMMR(bool antiBoosting) {
+// Find squad average MMR score with anti-boosting calculation.  //This is more for demo purposes now
+int findAverageSquadMMRDemo(bool antiBoosting) {
 	int numOfPlayersinSquad = 1;
 	int playerMMRinput;
 	int averageMMR = 0;
@@ -98,7 +93,7 @@ int findAverageSquadMMR(bool antiBoosting) {
 	return adjustedAverageMMR;
 } // End of main
 
-//This is a reference for what rank a player is
+// This is a reference for what rank a player is
 string rankChecker(int playerMMR, int matchesPlayed) {
 	if (playerMMR >= 5000 && matchesPlayed >= 100) return "Champion";
 	else if (playerMMR >= 4800) return "Diamond 1";
@@ -127,7 +122,7 @@ string rankChecker(int playerMMR, int matchesPlayed) {
 	else return "Copper 5";
 }
 
-//This is the part that calculates a player's MMR score after a game
+// This is the part that calculates a player's MMR score after a game
 vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak, int loseStreak, bool gameWasWon, int doLongTest, int gamesPlayed, bool rankLossPrevention, bool streakBonusEnabled) {
 	int amountMMRChanged;
 	int streakBonus = 0;
@@ -241,7 +236,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 	return { playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed };
 }
 
-//This fuction is for testing
+// This fuction is for testing
 int simulation(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 
 	int champion = 0, diamond1 = 0, diamond2 = 0, diamond3 = 0, platinum1 = 0, platinum2 = 0, platinum3 = 0,
@@ -448,7 +443,7 @@ int simulation(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) 
 	return 0;
 }//End of Test
 
-//This is a useful function that takes a string, searches for a whitespace, then seperates the first word from the rest of the string.
+// This is a useful function that takes a string, searches for a whitespace, then seperates the first word from the rest of the string.
 vector<string> seperateFirstWordFromString(string orignalString) {
 	//Usage:
 	//vector<string> seperatedStrings = seperateFirstWordFromString(userInput);
@@ -470,34 +465,108 @@ vector<string> seperateFirstWordFromString(string orignalString) {
 	return { firstWord, restOfString };
 }
 
+// This is to prevent errors in case a string is suposed to contain all numbers with the only ASCII values being from the numbers 0-9
+bool stringContainsAllNumbers(string str) {
+	bool allNumbers = true;
+	//check to see if input is numbers
+	for (char ch : str) {
+		if (ch >= 48 && ch <= 57) {
+			allNumbers = true;
+		}
+		else {
+			allNumbers = false;
+			break;
+		}
 
-//subtasks for setSettings
-string changeSetting(string settingName, string settingsFileContents, char trueOrFalse) {
+	}
+	return allNumbers;
+}
+
+
+// This writes the new value for a variable into the settings
+string changeSetting(string settingName, string settingsFileContents, string newValue) {
 	int indexPosition;
 	indexPosition = settingsFileContents.find(settingName);
 	int cnt = settingName.length();
-	settingsFileContents[indexPosition + cnt + 3] = trueOrFalse;
+	int i = 0;
+
+	//If the string settingsFileContents is not long enough, this will fix it
+	if (settingsFileContents.size() < indexPosition + cnt + 3 + newValue.size()) {
+		settingsFileContents.resize(indexPosition + cnt + 3 + newValue.size(), ' ');
+	}
+	
+	while (i < newValue.size()) {
+		settingsFileContents[indexPosition + cnt + 3 + i] = newValue[i];
+		
+		i++;
+	}
+
+	settingsFileContents.erase(indexPosition + cnt + 3 + i, std::string::npos);
 
 	return settingsFileContents;
 }
 
+// This tells the program what kind of setting it is going to change.  Example: It is true/false, or a int variable
+char settingVariableType(string settingName, string settingsFileContents) {
+	//Index: bool = b, int = i, double = d, char = c, string = s 
+	char variableType;
+	int indexPosition;
+	indexPosition = settingsFileContents.find(settingName);
+	int cnt = settingName.length();
+	variableType = settingsFileContents[indexPosition - 2 ];
 
-//This asks if the user input is true, false, or if there was a misinput that returns an error.
-vector<string> trueFlaseOrError(string parameter1, string parameter2, string settingsFileContents, string errorOccured) {
+	return variableType;
+}
 
-	// True, False, or invalid
-	if (parameter2 == "true" || parameter2 == "1" || parameter2 == "enable") {
-		//streakbonus true
-		settingsFileContents = changeSetting(parameter1, settingsFileContents, '1');
+// If the input is valid, it will change the variable.  This is only programmed for Boolean and Integers at the time being 3-16-24.
+vector<string> validInputOrError(string parameter1, string parameter2, string settingsFileContents, string errorOccured) {
+	char variableType = settingVariableType(parameter1, settingsFileContents);
+	
+	//Index: bool = b, int = i, double = d, char = c, string = s 
+	if (variableType == 'b') {
+		// True, False, or invalid
+		if (parameter2 == "true" || parameter2 == "1" || parameter2 == "enable") {
+			//parameter2 true
+			settingsFileContents = changeSetting(parameter1, settingsFileContents, "1");
+		}
+		else if (parameter2 == "false" || parameter2 == "0" || parameter2 == "disable") {
+			//parameter2 false
+			settingsFileContents = changeSetting(parameter1, settingsFileContents, "0");
+		}
+		else {
+			//parameter2 ????
+			errorOccured = "Error";
+		}
 	}
-	else if (parameter2 == "false" || parameter2 == "0" || parameter2 == "disable") {
-		//streakbonus false
-		settingsFileContents = changeSetting(parameter1, settingsFileContents, '0');
+	else if (variableType == 'i') {
+
+		bool allNumbers = stringContainsAllNumbers(parameter2);
+
+		//check to see if input is numbers
+		for (char ch : parameter2) {
+			int v = ch; // ASCII Val converted
+			if (ch >= 48 && ch <= 57) {
+				allNumbers = true;
+			}
+			else {
+				allNumbers = false;
+				break;
+			}
+		}
+		if (allNumbers) {
+			//parameter2 ###
+			settingsFileContents = changeSetting(parameter1, settingsFileContents, parameter2);
+		}
+		else {
+			//parameter2 ????
+			errorOccured = "Error!";
+		}
+
+
+		
+
 	}
-	else {
-		//streakbonus ????
-		errorOccured = "Error";
-	}
+
 
 	vector<string> result = { settingsFileContents, errorOccured };
 
@@ -505,7 +574,7 @@ vector<string> trueFlaseOrError(string parameter1, string parameter2, string set
 
 }
 
-//This function calls the settings.txt file and copies it to a string.
+// This function calls the settings.txt file and copies it to a string.
 string settingsFileContentsToString() {
 	//Copy settings file to string.
 	ifstream copySettingsToString;
@@ -519,8 +588,9 @@ string settingsFileContentsToString() {
 	return settingsFileContents;
 }
 
-//This function searches the settings.text file for a setting; then it will retrive the one digit value from the string.
+// This function searches the settings.text file for a setting, then it will retrieve the value stored in that setting's variable.  This has problems when mmrlimit is 2 digits
 int pullVariableFromSettings(string settingName) {
+	
 	//This assumes that the setting exists:
 	string settings = settingsFileContentsToString();
 	string outputString;
@@ -528,8 +598,12 @@ int pullVariableFromSettings(string settingName) {
 	indexPosition = settings.find(settingName);
 	int cnt = settingName.length();
 	int i = 0;
+		
 	while (settings[indexPosition + cnt + 3 + i] != '\n') {
 		outputString = outputString + settings[indexPosition + cnt + 3 + i];
+		if (!stringContainsAllNumbers(outputString)) {
+			break;
+		}
 		i++;
 	}
 	
@@ -539,7 +613,8 @@ int pullVariableFromSettings(string settingName) {
 
 }
 
-//This is how you change the settings
+
+// This is the function that is used for when settings are changed.
 int setSettings(string userInput) {
 	//Settings file location: C:\Users\ryant\source\repos\match simulaator\match simulaator
 	string parameter1 = "", parameter2 = "";
@@ -547,14 +622,7 @@ int setSettings(string userInput) {
 	//Create settings file if it does not already exist.
 #pragma region
 //The settings file contents are copied to the string: settingsFileContents
-	ifstream settingsFileExists;
-	settingsFileExists.open("settings.txt");
-	if (!settingsFileExists)
-	{
-		//create a settings file
-		createDefaultSettingsFile();
-	}
-	settingsFileExists.close();
+	checkIfSettingsFileExists();
 #pragma endregion
 
 	//Get settings file contents and save it to the string settingsFileContents
@@ -573,7 +641,7 @@ int setSettings(string userInput) {
 	if (boost::algorithm::contains(settingsFileContents, parameter1)) {
 
 		vector<string> output = {};
-		output = trueFlaseOrError(parameter1, parameter2, settingsFileContents, errorOccured);
+		output = validInputOrError(parameter1, parameter2, settingsFileContents, errorOccured);
 
 		settingsFileContents = output[0];
 		errorOccured = output[1];
@@ -632,36 +700,19 @@ int setSettings(string userInput) {
 
 
 // Find squad average MMR score with anti-boosting calculation./////////////////////////////////////////////////////////////
-int findAverageSquadMMRTEST(vector<vector<int>> squad) {
+int findAverageSquadMMR(vector<vector<int>> squad) {
 	squad.erase(squad.begin() + 0);
 
 	vector<int> squadMMR;
 	squadMMR.resize(squad.size());
-	
-	
-	for (int i = 0; i < squad.size(); i++) {
-		squadMMR[i] = squad[i][1];
-	};
-
-	//This is to make sure the input is good.
-	/*for (int i = 0; i < squadMMR.size(); i++) {
-		cout << squadMMR[i] << " ";
-		
-	}*/
-
-
-
-
+	for (int i = 0; i < squad.size(); i++) { squadMMR[i] = squad[i][1]; };
 	bool antiBoosting = pullVariableFromSettings("antiboosting");
 	int numOfPlayersinSquad = squadMMR.size();
-	
 	int averageMMR = 0;
 	int adjustedAverageMMR = 0;
 	int largestMMRScore = -10000000; //Just a placeholder that wont ever be met.
-	int MMRLimit = 700; //This will be in settings later.
+	int MMRLimit = pullVariableFromSettings("mmrlimit"); //This will be in settings later. /////////////////////////////////
 	
-
-
 
 	//Get input from user of what the MMR of each player is.
 	for (int i = 0; i < numOfPlayersinSquad; i++) {
@@ -714,15 +765,15 @@ vector<vector<int>> playersTestData(int numOfSquads) {
 	return players;
 }
 
-//working on this right now:
-int matchMaking() {
 
+//working on this right now:
+vector<vector<int>> createSquads() {
 
 	//test data
 	//{PlayerID, MMR} (for testing. it should be from a database)
-	int numOfSquads = 5;
-	vector<vector<int>> players;
-	players = playersTestData(numOfSquads);
+	int numOfSquads = 500;
+	vector<vector<int>> squads;
+	squads = playersTestData(numOfSquads);
 
 	//Three dementional array.  The first dimension is each squad queing up.  
 	//The second dimension contains each other in the squad.
@@ -733,7 +784,7 @@ int matchMaking() {
 	int i = 0;
 	int j;
 	int k = 0;
-	
+
 	while (i < numOfSquads) {
 		groupsInCue.resize(i + 1);
 		j = 0;
@@ -741,57 +792,31 @@ int matchMaking() {
 
 		int squadAverageMMR = 0;
 		int numOfPlayersInSquad = trunc(rand() % 5);
-		groupsInCue[i].push_back({-1,0});
+		groupsInCue[i].push_back({ -1,0 });
 		while (j <= numOfPlayersInSquad) {
 			//calcuate the avearage before
-			squadAverageMMR = squadAverageMMR + players[k][1];
-			
-			groupsInCue[i].resize(j+1);
-			groupsInCue[i].push_back(players[k]);
+			squadAverageMMR = squadAverageMMR + squads[k][1];
+
+			groupsInCue[i].resize(j + 1);
+			groupsInCue[i].push_back(squads[k]);
 			j++;
 			k++; // Goes  through each player
 		}
-	
-			
-			
-			
 
 
-		//This will be replaced with findAverageSquadMMR(bool antiBoosting)/////////////////////////////////////////////////////////////
-		groupsInCue[i][0][1] = findAverageSquadMMRTEST(groupsInCue[i]);
+		//Saves the average MMR of the squad for where the squad should be placed in matchmaking.  This can either have antiboosting on or off.
+		groupsInCue[i][0][1] = findAverageSquadMMR(groupsInCue[i]);
 
-
-		//cout << " OK " << groupsInCue[i][1][1] << " OK";
-
-
-
-
-
-
-		//squadAverageMMR = trunc(squadAverageMMR / (numOfPlayersInSquad + 1));
-		//groupsInCue[i][0][1] = squadAverageMMR;
 		i++;
 	}
 	//At this point, groupsInCue has a list of players cueing together for games. From here, its a matter of matching them together
 
 
-
-
-
-	
-
-	//swap y and z
-	//x = squad
-	//y = player in squad 
-	//z = playerIDs or MMR
-	
-// See what is in groupsInCue
-	i = 0;
-	while (i < groupsInCue.size()) {
+	// See what is in groupsInCue
+	for (int i = 0; i < groupsInCue.size(); i++) {
 		cout << "Squad " << i + 1 << ":" << endl;
-		j = 1;
 		cout << "IDs: ";
-		while (j < groupsInCue[i].size()) {
+		for (int j = 1; j < groupsInCue[i].size(); j++) {
 			cout << groupsInCue[i][j][0] + 1;
 
 			// This is for formatting:		
@@ -800,29 +825,32 @@ int matchMaking() {
 				num = 1;
 			}
 			int spaces = 4 - trunc(log10(num));
+
 			for (int a = 0; a < spaces; a++) {
 				cout << " ";
 			}
-			j++;
 		}
 
-		j = 1;
 		cout << "\nMMR: ";
-		while (j < groupsInCue[i].size()) {
+		for (int j = 1; j < groupsInCue[i].size(); j++) {
 			cout << groupsInCue[i][j][1] << " ";
-			j++;
 		}
-		cout << "Average: " << groupsInCue[i][0][1] << " ";
-
+		if (pullVariableFromSettings("antiboosting") == 1) {
+			cout << "Adjusted Average: " << groupsInCue[i][0][1] << " ";
+		}
+		else {
+			cout << "Average: " << groupsInCue[i][0][1] << " ";
+		}
 		cout << endl << endl;
-		i++;
 	}
+	
+	return squads;
+}
 
 
 
-
-
-
+int matchMaking() {
+	vector<vector<int>> squads = createSquads();
 
 
 	//This is the squad that is being made
@@ -830,7 +858,7 @@ int matchMaking() {
 	int averageMMR = 0;
 
 
-	squad.push_back(players[0]);
+	squad.push_back(squads[0]);
 
 
 
@@ -841,10 +869,10 @@ int matchMaking() {
 	while (squad.size() > 5) {
 
 
-		for (int i = 0; i < players.size(); i++) {
+		for (int i = 0; i < squads.size(); i++) {
 
-			if (players[i][1] > averageMMR - mmrSearchRestriction && players[i][1] < averageMMR + mmrSearchRestriction) {
-				squad.push_back(players[i]);
+			if (squads[i][1] > averageMMR - mmrSearchRestriction && squads[i][1] < averageMMR + mmrSearchRestriction) {
+				squad.push_back(squads[i]);
 				break;
 			}
 
@@ -933,16 +961,19 @@ int teamSetup() {
 
 
 
-//This function shows information to the user by showing a list of commands to control the program
+//This function shows information to the user by showing a list of commands to control the program////////////////////////////
 int listOfMainCommands() {
 	cout << "\nList of commands:" << endl;
 	cout << "averagemmr - Find the average MMR of a squad" << endl;
+	cout << "close - This will close the window and end the program." << endl;
 	cout << "help - shows the list of commands" << endl;
+	cout << "seevariables -  This will check to see what the value is for the variable entered." << endl;
 	cout << "set <setting parameter> <true/false> - Change the settings" << endl;
-	cout << "test <#> - this will test the machmaking algorithm."
-		<< "\n     test 0 - manually test wins and losses entering 1 for wins and 0 for losses."
-		<< "\n     test 1 - Shows individual player data results from randomly generated match results. Win rates are 50%."
-		<< "\n     test 2 - Same as test 1, but tallies final results overtime in with 10,000 players per cycle." << endl;
+	cout << "simulate <#> - this will test the machmaking algorithm."
+		<< "\n     simulate 0 - manually test wins and losses entering 1 for wins and 0 for losses."
+		<< "\n     simulate 1 - Shows individual player data results from randomly generated match results. Win rates are 50%."
+		<< "\n     simulate 2 - Same as test 1, but tallies final results overtime in with 10,000 players per cycle." << endl;
+	
 	//cout << "test #" << endl;
 
 	return 0;
@@ -951,6 +982,7 @@ int listOfMainCommands() {
 //This is the main function where you can control the program and what functions are ran
 int main() {
 	//settings: 
+	checkIfSettingsFileExists();
 	bool infiniteLoop = 1;
 	while (infiniteLoop) {
 		bool antiBoostingEnabled = pullVariableFromSettings("antiboosting");
@@ -974,7 +1006,7 @@ int main() {
 
 
 		//This is where functions are linked based off of where which commnand was entered by the user
-		if (firstWordOfCommand == "simulation") {
+		if (firstWordOfCommand == "simulate") {
 
 			if (theRestOfCommand == "") {
 				cout << "Which test would you like to run?\n" <<
@@ -1003,7 +1035,7 @@ int main() {
 
 		}
 		else if (firstWordOfCommand == "averagemmr") {
-			cout << "Matchmaking will place you in: " << findAverageSquadMMR(antiBoostingEnabled) << " MMR." << endl;;
+			cout << "Matchmaking will place you in: " << findAverageSquadMMRDemo(antiBoostingEnabled) << " MMR." << endl;;
 			cin.ignore();
 		}
 		else if (firstWordOfCommand == "set") {
@@ -1013,9 +1045,20 @@ int main() {
 		else if (firstWordOfCommand == "help") {
 			listOfMainCommands();
 		}
+		else if (firstWordOfCommand == "seevariables") {
+			cout << settingsFileContentsToString() << endl;
+
+		}
 		else if (firstWordOfCommand == "test") {
 			//This is for whatever I am working on at the moment.
-			matchMaking();
+			createSquads();
+		}
+		else if (firstWordOfCommand == "test2") {
+			//unused rn
+			cout << pullVariableFromSettings("mmrlimit");
+		}
+		else if (firstWordOfCommand == "close") {
+			break;
 		}
 		else {
 			cout << "Error! invalid input!";
