@@ -767,7 +767,7 @@ vector<vector<int>> playersTestData(int numOfSquads) {
 
 
 //working on this right now:
-vector<vector<int>> createSquads() {
+vector<vector<vector<int>>> createSquads() {
 
 	//test data
 	//{PlayerID, MMR} (for testing. it should be from a database)
@@ -813,6 +813,7 @@ vector<vector<int>> createSquads() {
 
 
 	// See what is in groupsInCue
+	
 	for (int i = 0; i < groupsInCue.size(); i++) {
 		cout << "Squad " << i + 1 << ":" << endl;
 		cout << "IDs: ";
@@ -844,28 +845,65 @@ vector<vector<int>> createSquads() {
 		cout << endl << endl;
 	}
 	
-	return squads;
+
+
+	return groupsInCue;
 }
 
 
 
-int matchMaking() {
-	vector<vector<int>> squads = createSquads();
+int squadTeamSetUp() {
+
+	vector<vector<vector<int>>> squadsInQue = createSquads();
+
+	// This is the squad that is being made
+	
+
+	// Fine multiple squads for testing
+	for (int i = 0; i < 20; i++) {
 
 
-	//This is the squad that is being made
-	vector<vector<int>> squad = {};
-	int averageMMR = 0;
+		vector<vector<int>> team;
+		int availableSeatsOnTeam = 5;
+		//Adding a squad to the team
+		for (int squadInQueIndex = 0; squadInQueIndex < squadsInQue.size() && availableSeatsOnTeam > 0; squadInQueIndex++) {
+			//While squad is not full and there are squads in the queue
+
+			//Checks if squad will fit on team.  If they do, then it will add them to the team
+			if (squadsInQue[squadInQueIndex].size() - 1 <= availableSeatsOnTeam) { // subtract 1 here
+				//Adds squad to team
+				for (int i = 1; i < squadsInQue[squadInQueIndex].size(); i++) { // start from 1 here
+					team.push_back({ squadsInQue[squadInQueIndex][i][0], squadsInQue[squadInQueIndex][i][1] });
+				}
+				squadsInQue.erase(squadsInQue.begin() + squadInQueIndex);
+				availableSeatsOnTeam = 5 - team.size();
+				squadInQueIndex = 0; // reset index to start from the beginning of the queue
+				
+			}
+		}
+
+		cout << endl;
+		for (int i = 0; i < team.size(); i++) {
+			cout << "PlayerID: " << team[i][0] << "  PlayerMMR: " << team[i][1] << endl;
+		}
+
+		cout << "\n\n\n";
+	}
 
 
-	squad.push_back(squads[0]);
 
 
 
-	cout << squad.size();
 
 
-	int mmrSearchRestriction = 10;
+
+
+
+
+	//cout << squads.size();
+
+
+	/*int mmrSearchRestriction = 10;
 	while (squad.size() > 5) {
 
 
@@ -893,6 +931,7 @@ int matchMaking() {
 		cout << averageMMR << " " << i;;
 
 	}
+	*/
 
 	return 0;
 }
@@ -901,7 +940,7 @@ int matchMaking() {
 
 
 //This is set up for solo queuing right now.  //WIP
-int teamSetup() {
+int soloQueuingTeamSetup() {
 	vector<int> playersMMR = { 2000, 2100, 2200, 2300, 2400, 2600, 2700, 2800, 2900, 3000 };
 	vector<int> redTeam = { 0,0,0,0,0 };
 	vector<int> blueTeam = { 0,0,0,0,0 };
@@ -1051,7 +1090,7 @@ int main() {
 		}
 		else if (firstWordOfCommand == "test") {
 			//This is for whatever I am working on at the moment.
-			createSquads();
+			squadTeamSetUp();
 		}
 		else if (firstWordOfCommand == "test2") {
 			//unused rn
