@@ -494,10 +494,10 @@ string changeSetting(string settingName, string settingsFileContents, string new
 	if (settingsFileContents.size() < indexPosition + cnt + 3 + newValue.size()) {
 		settingsFileContents.resize(indexPosition + cnt + 3 + newValue.size(), ' ');
 	}
-	
+
 	while (i < newValue.size()) {
 		settingsFileContents[indexPosition + cnt + 3 + i] = newValue[i];
-		
+
 		i++;
 	}
 
@@ -513,7 +513,7 @@ char settingVariableType(string settingName, string settingsFileContents) {
 	int indexPosition;
 	indexPosition = settingsFileContents.find(settingName);
 	int cnt = settingName.length();
-	variableType = settingsFileContents[indexPosition - 2 ];
+	variableType = settingsFileContents[indexPosition - 2];
 
 	return variableType;
 }
@@ -521,7 +521,7 @@ char settingVariableType(string settingName, string settingsFileContents) {
 // If the input is valid, it will change the variable.  This is only programmed for Boolean and Integers at the time being 3-16-24.
 vector<string> validInputOrError(string parameter1, string parameter2, string settingsFileContents, string errorOccured) {
 	char variableType = settingVariableType(parameter1, settingsFileContents);
-	
+
 	//Index: bool = b, int = i, double = d, char = c, string = s 
 	if (variableType == 'b') {
 		// True, False, or invalid
@@ -563,7 +563,7 @@ vector<string> validInputOrError(string parameter1, string parameter2, string se
 		}
 
 
-		
+
 
 	}
 
@@ -590,7 +590,7 @@ string settingsFileContentsToString() {
 
 // This function searches the settings.text file for a setting, then it will retrieve the value stored in that setting's variable.  This has problems when mmrlimit is 2 digits
 int pullVariableFromSettings(string settingName) {
-	
+
 	//This assumes that the setting exists:
 	string settings = settingsFileContentsToString();
 	string outputString;
@@ -598,7 +598,7 @@ int pullVariableFromSettings(string settingName) {
 	indexPosition = settings.find(settingName);
 	int cnt = settingName.length();
 	int i = 0;
-		
+
 	while (settings[indexPosition + cnt + 3 + i] != '\n') {
 		outputString = outputString + settings[indexPosition + cnt + 3 + i];
 		if (!stringContainsAllNumbers(outputString)) {
@@ -606,7 +606,7 @@ int pullVariableFromSettings(string settingName) {
 		}
 		i++;
 	}
-	
+
 
 	int intResult = stoi(outputString);
 	return intResult;
@@ -700,9 +700,10 @@ int setSettings(string userInput) {
 
 
 // Find squad average MMR score with anti-boosting calculation./////////////////////////////////////////////////////////////
-int findAverageSquadMMR(vector<vector<int>> squad) {
-	squad.erase(squad.begin() + 0);
-
+int findAverageSquadMMR(vector<vector<int>> squad, bool removeFirstEntry) {
+	if(removeFirstEntry){
+		squad.erase(squad.begin() + 0);  
+	}
 	vector<int> squadMMR;
 	squadMMR.resize(squad.size());
 	for (int i = 0; i < squad.size(); i++) { squadMMR[i] = squad[i][1]; };
@@ -712,7 +713,7 @@ int findAverageSquadMMR(vector<vector<int>> squad) {
 	int adjustedAverageMMR = 0;
 	int largestMMRScore = -10000000; //Just a placeholder that wont ever be met.
 	int MMRLimit = pullVariableFromSettings("mmrlimit"); //This will be in settings later. /////////////////////////////////
-	
+
 
 	//Get input from user of what the MMR of each player is.
 	for (int i = 0; i < numOfPlayersinSquad; i++) {
@@ -737,12 +738,16 @@ int findAverageSquadMMR(vector<vector<int>> squad) {
 			adjustedAverageMMR = adjustedAverageMMR + (largestMMRScore - MMRLimit);
 		}
 	}
+	
+	if(numOfPlayersinSquad != 0){
 		averageMMR = averageMMR / numOfPlayersinSquad;
 		adjustedAverageMMR = adjustedAverageMMR / numOfPlayersinSquad;
-	
+	}
+	else{
+		adjustedAverageMMR = 0; //error prevention while testing
+	}
 
-
-		return adjustedAverageMMR;
+	return adjustedAverageMMR;
 	//cout << "With boosting: " << averageMMR << "\nRank after anti-boosting: " << adjustedAverageMMR;
 	//return adjustedAverageMMR;
 } // End of main
@@ -805,7 +810,7 @@ vector<vector<vector<int>>> createSquads() {
 
 
 		//Saves the average MMR of the squad for where the squad should be placed in matchmaking.  This can either have antiboosting on or off.
-		groupsInCue[i][0][1] = findAverageSquadMMR(groupsInCue[i]);
+		groupsInCue[i][0][1] = findAverageSquadMMR(groupsInCue[i], true);
 
 		i++;
 	}
@@ -813,25 +818,25 @@ vector<vector<vector<int>>> createSquads() {
 
 
 	// See what is in groupsInCue
-	
+
 	for (int i = 0; i < groupsInCue.size(); i++) {
 		cout << "Squad " << i + 1 << ":" << endl;
 		cout << "IDs: ";
 		for (int j = 1; j < groupsInCue[i].size(); j++) {
 			cout << groupsInCue[i][j][0] + 1;
-
+	
 			// This is for formatting:		
 			int num = groupsInCue[i][j][0];
 			if (num == 0) {
 				num = 1;
 			}
 			int spaces = 4 - trunc(log10(num));
-
+	
 			for (int a = 0; a < spaces; a++) {
 				cout << " ";
 			}
 		}
-
+	
 		cout << "\nMMR: ";
 		for (int j = 1; j < groupsInCue[i].size(); j++) {
 			cout << groupsInCue[i][j][1] << " ";
@@ -844,7 +849,7 @@ vector<vector<vector<int>>> createSquads() {
 		}
 		cout << endl << endl;
 	}
-	
+
 
 
 	return groupsInCue;
@@ -854,84 +859,143 @@ vector<vector<vector<int>>> createSquads() {
 
 int squadTeamSetUp() {
 
-	vector<vector<vector<int>>> squadsInQue = createSquads();
 
-	// This is the squad that is being made
+	//ChatGPT edit of my code:
+	// Initial setup
+	vector<vector<vector<int>>> squadsInQue = createSquads();
+	vector<vector<int>> team1;
+	vector<vector<int>> team2;
+
+	// Set initial parameters
+
+	// Populate team1
+	for (int i = 1; i < squadsInQue[0].size(); i++) {
+		team1.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
+	}
+	squadsInQue.erase(squadsInQue.begin());  // Remove first squad from queue
+
+	// Calculate initial average MMR difference
+
+	// Loop to fill both teams
+	while (team1.size() < 5 || team2.size() < 5) { // Use || instead of &&
+		bool squadAdded = false; // Flag to track if any squad was added in this iteration
+		for (int squadQueIndex = 0; squadQueIndex < squadsInQue.size(); squadQueIndex++) {
+			// Check if the squad can fit into either team
+			// If it can fit into team1
+			if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
+				// Add squad to team1
+				for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+					team1.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+				}
+				squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+				squadAdded = true;
+				break; // Exit the loop to ensure we only add one squad per iteration
+			}
+			// If it can fit into team2
+			else if (team2.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
+				// Add squad to team2
+				for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+					team2.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+				}
+				squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+				squadAdded = true;
+				break; // Exit the loop to ensure we only add one squad per iteration
+			}
+		}
+		// If no squad was added in this iteration, break the loop
+		if (!squadAdded) {
+			break;
+		}
+	}
+
+
+
+
+
+
+
+	//my code:
+
+	/*
+
+	//Squad A
+
+// Initial setup
+vector<vector<vector<int>>> squadsInQue = createSquads();
+vector<vector<int>> team1;
+vector<vector<int>> team2;
+
+// Set initial parameters
+
+// Populate team1
+for (int i = 1; i < squadsInQue[0].size(); i++) {
+    team1.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
+}
+squadsInQue.erase(squadsInQue.begin());  // Remove first squad from queue
+
+// Calculate initial average MMR difference
+
+// Loop to fill both teams
+while (team1.size() < 5 || team2.size() < 5) { // Use || instead of &&
+    bool squadAdded = false; // Flag to track if any squad was added in this iteration
+    for (int squadQueIndex = 0; squadQueIndex < squadsInQue.size(); squadQueIndex++) {
+        // Check if the squad can fit into either team
+        // If it can fit into team1
+        if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
+            // Add squad to team1
+            for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+                team1.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+            }
+            squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+            squadAdded = true;
+            break; // Exit the loop to ensure we only add one squad per iteration
+        }
+        // If it can fit into team2
+        else if (team2.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
+            // Add squad to team2
+            for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+                team2.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+            }
+            squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+            squadAdded = true;
+            break; // Exit the loop to ensure we only add one squad per iteration
+        }
+    }
+    // If no squad was added in this iteration, break the loop
+    if (!squadAdded) {
+        break;
+    }
+}
+	*/
 	
 
-	// Fine multiple squads for testing
-	for (int i = 0; i < 20; i++) {
 
 
-		vector<vector<int>> team;
-		int availableSeatsOnTeam = 5;
-		//Adding a squad to the team
-		for (int squadInQueIndex = 0; squadInQueIndex < squadsInQue.size() && availableSeatsOnTeam > 0; squadInQueIndex++) {
-			//While squad is not full and there are squads in the queue
 
-			//Checks if squad will fit on team.  If they do, then it will add them to the team
-			if (squadsInQue[squadInQueIndex].size() - 1 <= availableSeatsOnTeam) { // subtract 1 here
-				//Adds squad to team
-				for (int i = 1; i < squadsInQue[squadInQueIndex].size(); i++) { // start from 1 here
-					team.push_back({ squadsInQue[squadInQueIndex][i][0], squadsInQue[squadInQueIndex][i][1] });
-				}
-				squadsInQue.erase(squadsInQue.begin() + squadInQueIndex);
-				availableSeatsOnTeam = 5 - team.size();
-				squadInQueIndex = 0; // reset index to start from the beginning of the queue
-				
-			}
-		}
 
-		cout << endl;
-		for (int i = 0; i < team.size(); i++) {
-			cout << "PlayerID: " << team[i][0] << "  PlayerMMR: " << team[i][1] << endl;
-		}
 
-		cout << "\n\n\n";
+	int ave1 = 0;;
+	cout << endl;
+	for (int i = 0; i < team1.size(); i++) {
+		cout << "1 PlayerID: " << team1[i][0] << "  PlayerMMR: " << team1[i][1] << endl;
+		ave1 = ave1 + team1[i][1];
 	}
+	ave1 = ave1 / 5;
 
-
-
-
-
-
-
-
-
-
-
-	//cout << squads.size();
-
-
-	/*int mmrSearchRestriction = 10;
-	while (squad.size() > 5) {
-
-
-		for (int i = 0; i < squads.size(); i++) {
-
-			if (squads[i][1] > averageMMR - mmrSearchRestriction && squads[i][1] < averageMMR + mmrSearchRestriction) {
-				squad.push_back(squads[i]);
-				break;
-			}
-
-
-		}
-
-
-		mmrSearchRestriction = mmrSearchRestriction + 10;
-
-		averageMMR = 0;
-		int i = 0;
-		while (i < squad.size()) {
-			averageMMR = averageMMR + squad[i][2];
-
-			i++;
-		}
-		averageMMR = averageMMR / (i + 1);
-		cout << averageMMR << " " << i;;
-
+	cout << "Ave: " << ave1 << endl;
+	int ave2 = 0;
+	for (int i = 0; i < team2.size(); i++) {
+		cout << "2 PlayerID: " << team2[i][0] << "  PlayerMMR: " << team2[i][1] << endl;
+		ave2 = ave2 + team2[i][1];
 	}
-	*/
+	ave2 = ave2 / 5;
+	cout << "Ave: " << ave2 << endl;
+	cout << abs(ave1 - ave2) << endl;
+
+
+	cout << "\n\n";
+
+	
 
 	return 0;
 }
@@ -1012,7 +1076,7 @@ int listOfMainCommands() {
 		<< "\n     simulate 0 - manually test wins and losses entering 1 for wins and 0 for losses."
 		<< "\n     simulate 1 - Shows individual player data results from randomly generated match results. Win rates are 50%."
 		<< "\n     simulate 2 - Same as test 1, but tallies final results overtime in with 10,000 players per cycle." << endl;
-	
+
 	//cout << "test #" << endl;
 
 	return 0;
