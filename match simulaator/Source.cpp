@@ -1,14 +1,18 @@
 //Created by Ryan Boulds
-//last edited 3-16-24
+//last edited 3-20-24 1
+
+
 #include <iostream>
 #include <fstream> 
-//#include <array> //unused rn
 #include <vector>
 #include<windows.h>
 #include <iomanip>
 #include <sstream>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/count.hpp>
+//#include <array> //unused rn
+
+
 
 using namespace std;
 
@@ -236,7 +240,7 @@ vector<int> endOfMatchMMRTally(int playerMMR, int MMRChangeLevel, int winStreak,
 	return { playerMMR, MMRChangeLevel, winStreak, loseStreak, gamesPlayed };
 }
 
-// This fuction is for testing
+// This function is for testing
 int simulation(int whichTest, bool rankLossPrevention, bool streakBonusEnabled) {
 
 	int champion = 0, diamond1 = 0, diamond2 = 0, diamond3 = 0, platinum1 = 0, platinum2 = 0, platinum3 = 0,
@@ -482,6 +486,17 @@ bool stringContainsAllNumbers(string str) {
 	return allNumbers;
 }
 
+// This tells the program what kind of setting it is going to change.  Example: It is true/false, or a int variable
+char settingVariableType(string settingName, string settingsFileContents) {
+	//Index: bool = b, int = i, double = d, char = c, string = s 
+	char variableType;
+	int indexPosition;
+	indexPosition = settingsFileContents.find(settingName);
+	int cnt = settingName.length();
+	variableType = settingsFileContents[indexPosition - 2];
+
+	return variableType;
+}
 
 // This writes the new value for a variable into the settings
 string changeSetting(string settingName, string settingsFileContents, string newValue) {
@@ -501,21 +516,10 @@ string changeSetting(string settingName, string settingsFileContents, string new
 		i++;
 	}
 
-	settingsFileContents.erase(indexPosition + cnt + 3 + i, std::string::npos);
-
+	if (settingVariableType(settingName, settingsFileContents) != 'b') {
+		settingsFileContents.erase(indexPosition + cnt + 3 + i, std::string::npos);  //This could cause a problem
+	}
 	return settingsFileContents;
-}
-
-// This tells the program what kind of setting it is going to change.  Example: It is true/false, or a int variable
-char settingVariableType(string settingName, string settingsFileContents) {
-	//Index: bool = b, int = i, double = d, char = c, string = s 
-	char variableType;
-	int indexPosition;
-	indexPosition = settingsFileContents.find(settingName);
-	int cnt = settingName.length();
-	variableType = settingsFileContents[indexPosition - 2];
-
-	return variableType;
 }
 
 // If the input is valid, it will change the variable.  This is only programmed for Boolean and Integers at the time being 3-16-24.
@@ -613,17 +617,16 @@ int pullVariableFromSettings(string settingName) {
 
 }
 
-
 // This is the function that is used for when settings are changed.
 int setSettings(string userInput) {
 	//Settings file location: C:\Users\ryant\source\repos\match simulaator\match simulaator
 	string parameter1 = "", parameter2 = "";
 	string errorOccured = "No Error";
 	//Create settings file if it does not already exist.
-#pragma region
+
 //The settings file contents are copied to the string: settingsFileContents
 	checkIfSettingsFileExists();
-#pragma endregion
+
 
 	//Get settings file contents and save it to the string settingsFileContents
 	string settingsFileContents = settingsFileContentsToString();
@@ -671,6 +674,22 @@ int setSettings(string userInput) {
 	}
 
 
+	int indexPosition;
+	indexPosition = settingsFileContents.find(parameter1);
+	int cnt = parameter1.length();
+
+	if (settingsFileContents[indexPosition + cnt + 1] != '=') {
+		errorOccured = "Error";
+	};
+
+
+	if (parameter1 != "reset" && errorOccured != "Error") {
+		//Save by replacing old settings file with updated settings in String.
+		ofstream updatSettingsFile("settings.txt");
+		updatSettingsFile << settingsFileContents;
+		updatSettingsFile.close();
+	}
+
 	//If an invalid input or help is written, it will help the user
 	if (errorOccured == "Error" || parameter1 == "help") {
 		if (errorOccured == "Error") {
@@ -684,12 +703,6 @@ int setSettings(string userInput) {
 		errorOccured = "No Error";
 	}
 
-	if (parameter1 != "reset") {
-		//Save by replacing old settings file with updated settings in String.
-		ofstream updatSettingsFile("settings.txt");
-		updatSettingsFile << settingsFileContents;
-		updatSettingsFile.close();
-	}
 
 	//Output settings file contents to show what the settings.txt file says
 	cout << settingsFileContentsToString();
@@ -697,7 +710,6 @@ int setSettings(string userInput) {
 
 	return 0;
 }
-
 
 // Find squad average MMR score with anti-boosting calculation./////////////////////////////////////////////////////////////
 int findAverageSquadMMR(vector<vector<int>> squad, bool removeFirstEntry) {
@@ -747,7 +759,14 @@ int findAverageSquadMMR(vector<vector<int>> squad, bool removeFirstEntry) {
 		adjustedAverageMMR = 0; //error prevention while testing
 	}
 
-	return adjustedAverageMMR;
+	if (removeFirstEntry) {
+		return adjustedAverageMMR;
+	}
+	else {
+		return averageMMR;
+	}
+
+
 	//cout << "With boosting: " << averageMMR << "\nRank after anti-boosting: " << adjustedAverageMMR;
 	//return adjustedAverageMMR;
 } // End of main
@@ -770,10 +789,9 @@ vector<vector<int>> playersTestData(int numOfSquads) {
 	return players;
 }
 
-
 //working on this right now:
 vector<vector<vector<int>>> createSquads() {
-
+	cout << "createSquads";
 	//test data
 	//{PlayerID, MMR} (for testing. it should be from a database)
 	int numOfSquads = 500;
@@ -789,8 +807,14 @@ vector<vector<vector<int>>> createSquads() {
 	int i = 0;
 	int j;
 	int k = 0;
-
+	int dot = 0;
 	while (i < numOfSquads) {
+		//This draws dots on screen to show that it is working.
+		dot = dot + 1;
+		if (dot % 1000 == 0) {
+			cout << '.';
+		}
+
 		groupsInCue.resize(i + 1);
 		j = 0;
 		//randomly figure out how many people are squading up together
@@ -819,162 +843,148 @@ vector<vector<vector<int>>> createSquads() {
 
 	// See what is in groupsInCue
 
-	for (int i = 0; i < groupsInCue.size(); i++) {
-		cout << "Squad " << i + 1 << ":" << endl;
-		cout << "IDs: ";
-		for (int j = 1; j < groupsInCue[i].size(); j++) {
-			cout << groupsInCue[i][j][0] + 1;
-	
-			// This is for formatting:		
-			int num = groupsInCue[i][j][0];
-			if (num == 0) {
-				num = 1;
-			}
-			int spaces = 4 - trunc(log10(num));
-	
-			for (int a = 0; a < spaces; a++) {
-				cout << " ";
-			}
-		}
-	
-		cout << "\nMMR: ";
-		for (int j = 1; j < groupsInCue[i].size(); j++) {
-			cout << groupsInCue[i][j][1] << " ";
-		}
-		if (pullVariableFromSettings("antiboosting") == 1) {
-			cout << "Adjusted Average: " << groupsInCue[i][0][1] << " ";
-		}
-		else {
-			cout << "Average: " << groupsInCue[i][0][1] << " ";
-		}
-		cout << endl << endl;
-	}
+	//for (int i = 0; i < groupsInCue.size(); i++) {
+	//	cout << "Squad " << i + 1 << ":" << endl;
+	//	cout << "IDs: ";
+	//	for (int j = 1; j < groupsInCue[i].size(); j++) {
+	//		cout << groupsInCue[i][j][0] + 1;
+	//
+	//		// This is for formatting:		
+	//		int num = groupsInCue[i][j][0];
+	//		if (num == 0) {
+	//			num = 1;
+	//		}
+	//		int spaces = 4 - trunc(log10(num));
+	//
+	//		for (int a = 0; a < spaces; a++) {
+	//			cout << " ";
+	//		}
+	//	}
+	//
+	//	cout << "\nMMR: ";
+	//	for (int j = 1; j < groupsInCue[i].size(); j++) {
+	//		cout << groupsInCue[i][j][1] << " ";
+	//	}
+	//	if (pullVariableFromSettings("antiboosting") == 1) {
+	//		cout << "Adjusted Average: " << groupsInCue[i][0][1] << " ";
+	//	}
+	//	else {
+	//		cout << "Average: " << groupsInCue[i][0][1] << " ";
+	//	}
+	//	cout << endl << endl;
+	//}
 
 
-
+	cout << "\n";
 	return groupsInCue;
 }
 
 
-
+//Create teams using data from createSquads()
 int squadTeamSetUp() {
 
+	
+		//ChatGPT edit of my code:
+		// Initial setup
+		vector<vector<vector<int>>> squadsInQue;
 
-	//ChatGPT edit of my code:
-	// Initial setup
-	vector<vector<vector<int>>> squadsInQue = createSquads();
-	vector<vector<int>> team1;
-	vector<vector<int>> team2;
 
-	// Set initial parameters
 
-	// Populate team1
-	for (int i = 1; i < squadsInQue[0].size(); i++) {
-		team1.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
-	}
-	squadsInQue.erase(squadsInQue.begin());  // Remove first squad from queue
+		for (int k = 0; k < 20; k++) {
 
-	// Calculate initial average MMR difference
-
-	// Loop to fill both teams
-	while (team1.size() < 5 || team2.size() < 5) { // Use || instead of &&
-		bool squadAdded = false; // Flag to track if any squad was added in this iteration
-		for (int squadQueIndex = 0; squadQueIndex < squadsInQue.size(); squadQueIndex++) {
-			// Check if the squad can fit into either team
-			// If it can fit into team1
-			if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
-				// Add squad to team1
-				for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
-					team1.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
-				}
-				squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
-				squadAdded = true;
-				break; // Exit the loop to ensure we only add one squad per iteration
+			if (squadsInQue.empty()) {
+				squadsInQue = createSquads();
 			}
-			// If it can fit into team2
-			else if (team2.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
-				// Add squad to team2
-				for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
-					team2.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
-				}
-				squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
-				squadAdded = true;
-				break; // Exit the loop to ensure we only add one squad per iteration
-			}
-		}
-		// If no squad was added in this iteration, break the loop
-		if (!squadAdded) {
-			break;
-		}
-	}
+			cout << "squadTeamSetUp";
+			// Set initial parameters
+			vector<vector<int>> team1;
+			vector<vector<int>> team2;
+		
+			vector<vector<int>> lobby; //For calculating average mmr of team1 + team2
+			int initialRange = 25;
+			int rangeOfMMR = initialRange;
 
-
-
-
-
-
-
-	//my code:
-
-	/*
-
-	//Squad A
-
-// Initial setup
-vector<vector<vector<int>>> squadsInQue = createSquads();
-vector<vector<int>> team1;
-vector<vector<int>> team2;
-
-// Set initial parameters
-
-// Populate team1
-for (int i = 1; i < squadsInQue[0].size(); i++) {
-    team1.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
-}
-squadsInQue.erase(squadsInQue.begin());  // Remove first squad from queue
-
-// Calculate initial average MMR difference
-
-// Loop to fill both teams
-while (team1.size() < 5 || team2.size() < 5) { // Use || instead of &&
-    bool squadAdded = false; // Flag to track if any squad was added in this iteration
-    for (int squadQueIndex = 0; squadQueIndex < squadsInQue.size(); squadQueIndex++) {
-        // Check if the squad can fit into either team
-        // If it can fit into team1
-        if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
-            // Add squad to team1
-            for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
-                team1.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
-            }
-            squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
-            squadAdded = true;
-            break; // Exit the loop to ensure we only add one squad per iteration
-        }
-        // If it can fit into team2
-        else if (team2.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
-            // Add squad to team2
-            for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
-                team2.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
-            }
-            squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
-            squadAdded = true;
-            break; // Exit the loop to ensure we only add one squad per iteration
-        }
-    }
-    // If no squad was added in this iteration, break the loop
-    if (!squadAdded) {
-        break;
-    }
-}
-	*/
 	
 
+			// Populate team1
+			for (int i = 1; i < squadsInQue[0].size(); i++) {
+				team1.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
+			}
+			squadsInQue.erase(squadsInQue.begin());  // Remove first squad from queue
 
+			//cout << "Before:  T1: " << team1.size() << " T2: " << team2.size() << endl;
+
+			// Loop to fill both teams
+			int dot = 0;
+			while (team1.size() < 5 || team2.size() < 5) {
+				//cout << "inside T1: " << team1.size() << " T2: " << team2.size() << endl;
+				
+				rangeOfMMR = rangeOfMMR + 15; //problem here
+				dot = dot + 1;
+				if (dot % 10 == 0) {
+					cout << '.';
+				}
+
+
+				bool squadAdded = false; // Flag to track if any squad was added in this iteration
+				//cout << "squadsInQue.size() = " << squadsInQue.size() << endl;
+				int squadQueIndex = 0;
+				while ( squadQueIndex < squadsInQue.size() && !squadAdded) {
+
+				
+					//right here is where we make sure that the squads added are within a certain range
+					// Squad that might be added has an average mmr less than the range allowed for the lobby
+
+					//cout << abs(squadsInQue[squadQueIndex][0][1] - findAverageSquadMMR(lobby, false)) << " < " << rangeOfMMR << endl; 
+					if (abs(squadsInQue[squadQueIndex][0][1] - findAverageSquadMMR(lobby, false)) < rangeOfMMR) {
+
+						//cout << squadQueIndex << endl;
+
+						
+						// Check if the squad can fit into either team
+						// If it can fit into team1
+						if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5) {
+							// Add squad to team1
+							for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+								team1.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+								lobby.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+							}
+							squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+							squadAdded = true;
+							cout << '\n' << "range: " << rangeOfMMR << '\n';
+							rangeOfMMR = initialRange;
+							
+						}
+						// If it can fit into team2
+						else if (team2.size() + squadsInQue[squadQueIndex].size() - 1 <= 5 && !squadAdded) {
+							// Add squad to team2
+							for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++) {
+								team2.push_back({ squadsInQue[squadQueIndex][i][0], squadsInQue[squadQueIndex][i][1] });
+							}
+							squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
+							squadAdded = true;
+							cout << '\n' << "range: " << rangeOfMMR << '\n';
+							rangeOfMMR = initialRange;
+							
+						}
+					}
+
+					squadQueIndex++;
+				}
+
+				
+			}	
+	
+			
 
 
 
 
 	int ave1 = 0;;
+	int ave2 = 0;
+	int adjustedAve1 = 0;
+	int adjustedAve2 = 0;
+
 	cout << endl;
 	for (int i = 0; i < team1.size(); i++) {
 		cout << "1 PlayerID: " << team1[i][0] << "  PlayerMMR: " << team1[i][1] << endl;
@@ -982,21 +992,25 @@ while (team1.size() < 5 || team2.size() < 5) { // Use || instead of &&
 	}
 	ave1 = ave1 / 5;
 
-	cout << "Ave: " << ave1 << endl;
-	int ave2 = 0;
+	cout<<endl;
+	
 	for (int i = 0; i < team2.size(); i++) {
 		cout << "2 PlayerID: " << team2[i][0] << "  PlayerMMR: " << team2[i][1] << endl;
 		ave2 = ave2 + team2[i][1];
 	}
 	ave2 = ave2 / 5;
-	cout << "Ave: " << ave2 << endl;
-	cout << abs(ave1 - ave2) << endl;
-
+	cout << endl << "Actual average T1: " << ave1 << endl;
+	cout << "Actual average T2: " << ave2 << endl << endl;
+	cout << "Adjusted average T1: " << findAverageSquadMMR(team1, false) << endl;
+	cout << "Adjusted average T2: " << findAverageSquadMMR(team2, false) << endl << endl;
+	cout << "Adjusted difference: " << abs(findAverageSquadMMR(team1, false) - findAverageSquadMMR(team2, false)) << endl;
+	cout << "Actual difference: " << abs(ave1 - ave2) << endl;
+	cout << "range: " << rangeOfMMR << endl;
 
 	cout << "\n\n";
 
 	
-
+		}
 	return 0;
 }
 
@@ -1148,7 +1162,7 @@ int main() {
 		else if (firstWordOfCommand == "help") {
 			listOfMainCommands();
 		}
-		else if (firstWordOfCommand == "seevariables") {
+		else if (firstWordOfCommand == "seesetting") {
 			cout << settingsFileContentsToString() << endl;
 
 		}
