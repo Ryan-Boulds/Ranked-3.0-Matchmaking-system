@@ -902,7 +902,7 @@ vector<vector<vector<int>>> createSquads()
 	cout << "createSquads";
 	//test data
 	//{PlayerID, MMR} (for testing. it should be from a database)
-	int numOfSquads = 500;
+	int numOfSquads = 50000;
 	vector<vector<int>> squads;
 	squads = playersTestData(numOfSquads);
 
@@ -999,7 +999,7 @@ int squadTeamSetUp()
 	vector<vector<vector<int>>> squadsInQue;
 
 
-	for (int k = 0; k < 20; k++)
+	for (int k = 0; k < 1000; k++)
 	{
 		if (squadsInQue.empty())
 		{
@@ -1019,6 +1019,7 @@ int squadTeamSetUp()
 		for (int i = 1; i < squadsInQue[0].size(); i++)
 		{
 			team1.push_back({squadsInQue[0][i][0], squadsInQue[0][i][1]});
+			lobby.push_back({ squadsInQue[0][i][0], squadsInQue[0][i][1] });
 		}
 		squadsInQue.erase(squadsInQue.begin()); // Remove first squad from queue
 
@@ -1030,7 +1031,7 @@ int squadTeamSetUp()
 		{
 			//cout << "inside T1: " << team1.size() << " T2: " << team2.size() << endl;
 
-			rangeOfMMR = rangeOfMMR + 15; //problem here
+			rangeOfMMR = rangeOfMMR + 25; //problem here
 			dot = dot + 1;
 			if (dot % 10 == 0)
 			{
@@ -1039,23 +1040,21 @@ int squadTeamSetUp()
 
 
 			bool squadAdded = false; // Flag to track if any squad was added in this iteration
-			//cout << "squadsInQue.size() = " << squadsInQue.size() << endl;
+			
 			int squadQueIndex = 0;
 			while (squadQueIndex < squadsInQue.size() && !squadAdded)
 			{
 				//right here is where we make sure that the squads added are within a certain range
 				// Squad that might be added has an average mmr less than the range allowed for the lobby
-
-				//cout << abs(squadsInQue[squadQueIndex][0][1] - findAverageSquadMMR(lobby, false)) << " < " << rangeOfMMR << endl; 
 				if (abs(squadsInQue[squadQueIndex][0][1] - findAverageSquadMMR(lobby, false)) < rangeOfMMR)
 				{
-					//cout << squadQueIndex << endl;
 
-
+					
 					// Check if the squad can fit into either team
 					// If it can fit into team1
 					if (team1.size() + squadsInQue[squadQueIndex].size() - 1 <= 5)
 					{
+						
 						// Add squad to team1
 						for (int i = 1; i < squadsInQue[squadQueIndex].size(); i++)
 						{
@@ -1064,7 +1063,6 @@ int squadTeamSetUp()
 						}
 						squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
 						squadAdded = true;
-						cout << '\n' << "range: " << rangeOfMMR << '\n';
 						rangeOfMMR = initialRange;
 					}
 					// If it can fit into team2
@@ -1077,7 +1075,6 @@ int squadTeamSetUp()
 						}
 						squadsInQue.erase(squadsInQue.begin() + squadQueIndex);
 						squadAdded = true;
-						cout << '\n' << "range: " << rangeOfMMR << '\n';
 						rangeOfMMR = initialRange;
 					}
 				}
