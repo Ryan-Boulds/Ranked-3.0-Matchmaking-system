@@ -1,5 +1,5 @@
 //Created by Ryan Boulds
-//last edited 3-26-24
+//last edited 3-27-24
 
 
 #include <iostream>
@@ -13,10 +13,19 @@
 #include <cmath>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/count.hpp>
-//#include <array> //unused rn
+#include <array>
+#include <random>
 
 
 using namespace std;
+
+int randomNumberGenerator(int lowRange, int highRange) {
+	random_device rd; // obtain a random number from hardware
+	mt19937 gen(rd()); // seed the generator
+	uniform_int_distribution<> distr(lowRange, highRange); // define the range
+
+	return distr(gen);
+}
 
 // Default settings can be set here:  //This is where the settings file is created.
 int createDefaultSettingsFile() {
@@ -711,8 +720,7 @@ int findAverageSquadMMR(vector<vector<int>> squad, bool removeFirstEntry) {
 	int adjustedAverageMMR = 0;
 	int largestMMRScore = -10000000; //Just a placeholder that wont ever be met.
 	int MMRLimit = pullVariableFromSettings("mmrlimit");
-	//This will be in settings later. /////////////////////////////////
-
+	
 
 	//Get input from user of what the MMR of each player is.
 	for (int i = 0; i < numOfPlayersInSquad; i++) {
@@ -749,8 +757,8 @@ int findAverageSquadMMR(vector<vector<int>> squad, bool removeFirstEntry) {
 
 		adjustedAverageMMR = 0; //error prevention while testing
 	}
-
-	if (removeFirstEntry) {
+	//IDK whats going on here.  Ill have to look into it
+	if (removeFirstEntry || antiBoosting) {
 
 		return adjustedAverageMMR;
 	}
@@ -1014,9 +1022,6 @@ int squadTeamSetUp() {
 //Create teams using data from createSquads()
 vector<vector<int>> modifiedSquadTeamSetUp(vector<vector<vector<int>>> squadsInQue) {
 
-
-	
-	cout << "squadTeamSetUp";
 	// Set initial parameters
 	vector<vector<int>> team1;
 	vector<vector<int>> team2;
@@ -1148,35 +1153,134 @@ vector<vector<int>> modifiedSquadTeamSetUp(vector<vector<vector<int>>> squadsInQ
 
 }
 
+
+int whoWins(vector<vector<int>> teams) {
+	vector<vector<int>> team1, team2;
+	int winner;
+	int team1Average = 0, team2Average = 0;
+	//separte team1 and team2
+	for (int i = 0; i < 5; i++) {
+		team1.push_back(teams[i]);
+		team1Average = team1Average + teams[i][1];
+	}
+	for (int i = 5; i < 10; i++) {
+		team2.push_back(teams[i]);
+		team2Average = team2Average + teams[i][1];
+	}
+	team1Average = team1Average / 5;
+	team2Average = team2Average / 5;
+	//team1Average = findAverageSquadMMR(team1, false);
+	//team2Average = findAverageSquadMMR(team2, false);
+
+	//Generate "random" winner
+	vector<int> teamThatWon;
+	int test;
+	if (team1Average + 700 < team2Average) {
+		teamThatWon = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Terrible 2 ";
+		test = 0;
+	}
+	else if (team1Average + 400 < team2Average) {
+		teamThatWon = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Bad 2 ";
+		test = 1;
+	}
+	else if (team1Average + 200 < team2Average) {
+		teamThatWon = { 0, 0, 0, 0, 1, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Good 2 ";
+		test = 2;
+	}
+	else if (team1Average < team2Average) {
+		teamThatWon = { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Perfect 2 ";
+		test = 3;
+	}
+	else if (team2Average + 700 < team1Average) {
+		teamThatWon = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Terrible 1 ";
+		test = 7;
+	}
+	else if (team2Average + 400 < team1Average) {
+		teamThatWon = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Bad 1 ";
+		test = 6;
+	}
+	else if (team2Average + 200 < team1Average) {
+		teamThatWon = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Good 1 ";
+		test = 5;
+	}
+	else if (team2Average < team1Average) {
+		teamThatWon = { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " Perfect 1 ";
+		test = 4;
+	}
+	else {
+		teamThatWon = { 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 };
+		cout << team1Average << " - " << team2Average << " = " << abs(team1Average - team2Average) << " EQUAL ";
+		test = 8;
+	}
+
+
+
+
+
+
+
+	int randomNum = randomNumberGenerator(0, 9);
+
+	winner = teamThatWon[randomNum];
+
+
+	cout <<"Team winner: "<< winner << endl;
+
+	return test;
+}
+
+
+
+
 int matchmakeAndTally() {
+	int zero = 0;
+	int one = 0;
+	int two = 0;
+	int three = 0;
+	int four = 0;
+	int five = 0;
+	int six = 0;
+	int seven = 0;
+	int eight = 0;
+	int nine = 0;
 
 	//for createSquads:
 	//The first dimension is each squad queuing up.
 	//The second dimension contains each player in the squad.
 	//The third dimension is each player's playerID and MMR.
-	//[i][0][j] seach for the playerID ?
-
 	vector<vector<vector<int>>> squadsInQue;
+	vector<vector<int>> teams, team1, team2;
 
 	squadsInQue = createSquads();
 
-	vector<vector<int>> teams, team1, team2;
-	teams = modifiedSquadTeamSetUp(squadsInQue);
 
 
-	for (int i = 0; i < 1; i++) {
+	// This loop is for a team setup
+	for (int i = 0; i < 100; i++) {
 
+		//convert teams into team1 and team2
+		teams = modifiedSquadTeamSetUp(squadsInQue);
 
-		for (int i = 0; i < 5; i++) {
-			team1.push_back(teams[i]);
+		for (int a = 0; a < 5; a++) {
+			team1.push_back(teams[a]);
 		}
-		cout << endl;
-		for (int i = 5; i < 10; i++) {
-			team2.push_back(teams[i]);
+		for (int a = 5; a < 10; a++) {
+			team2.push_back(teams[a]);
 		}
+
+
 
 		//print out the teams for testing purposes
-#pragma region
+		#pragma region
+		 /*
 		cout << "\nThe two teams\n";
 		for (auto& i : team1) {
 
@@ -1188,37 +1292,92 @@ int matchmakeAndTally() {
 			cout << "#2 PlayerID: " << i[0] << "  PlayerMMR: " << i[1] << endl;
 
 		}
-#pragma endregion
+		*/
+		 
+		#pragma endregion
 
-	}
 
-	//need to remove players from squads in que
+		//remove players that were matched together from squadsInQue
+		#pragma region
 
-	int i = 0;
-	//This goes through every squad
-	while (i < squadsInQue.size()) {
-		int j = 1;
-		bool squadIsRemoved = false;
-		//This goes through every player entry
-		while (j < squadsInQue[i].size() && !squadIsRemoved) {
-			//This searches for any of the players on the team.   // k might not be neccesary, but I am leaving it for now due to not having time at this moment in particular.
-			int k = 0;
-			while (k < teams.size() && !squadIsRemoved) {
-				//If one of the players in the squad is found on the team, they are dropped from the que
-				if (teams[k][0] == squadsInQue[i][j][0])
-				{
-					squadsInQue.erase(squadsInQue.begin() + i);
-					squadIsRemoved = true;
+		//[b][j][0] seach for the playerID
+		int b = 0;
+		//This goes through every squad
+		while (b < squadsInQue.size()) {
+			int j = 1;
+			bool squadIsRemoved = false;
+			//This goes through every player entry
+			while (j < squadsInQue[b].size() && !squadIsRemoved) {
+				//This searches for any of the players on the team.   // k might not be neccesary, but I am leaving it for now due to not having time at this moment in particular.
+				int k = 0;
+				while (k < teams.size() && !squadIsRemoved) {
+					//If one of the players in the squad is found on the team, they are dropped from the que
+					if (teams[k][0] == squadsInQue[b][j][0])
+					{
+						squadsInQue.erase(squadsInQue.begin() + b);
+						squadIsRemoved = true;
+					}
+					k++;
 				}
-				k++;
+				j++;
 			}
-			j++;
+			//Do not increment if the squad is removed.
+			if (!squadIsRemoved) {
+				b++;
+			}
 		}
-		//Do not increment if the squad is removed.
-		if (!squadIsRemoved) {
-			i++;
+	#pragma endregion
+
+		//Find out which team wins
+		int teamThatWins = whoWins(teams);
+
+		teams.clear();
+		team1.clear();
+		team2.clear();
+		//Sleep(2000);
+
+		if (teamThatWins == 0) {
+			zero++;
 		}
-	}
+		else if (teamThatWins == 1) {
+			one++;
+		}
+		else if (teamThatWins == 2) {
+			two++;
+		}
+		else if (teamThatWins == 3) {
+			three++;
+		}
+		else if (teamThatWins == 4) {
+			four++;
+		}
+		else if (teamThatWins == 5) {
+			five++;
+		}
+		else if (teamThatWins == 6) {
+			six++;
+		}
+		else if (teamThatWins == 7) {
+			seven++;
+		}
+		else if (teamThatWins == 8) {
+			three++;
+			four++;
+		}
+		
+
+		
+
+
+
+
+
+
+
+
+	}//End of for loop that is for each team set up
+
+	
 
 	//Now that the players in the last team are removed from squadsInQue, we can use squadsInQue again to search for a team.
 
@@ -1226,6 +1385,10 @@ int matchmakeAndTally() {
 
 
 	//This is the homestretch! Then a database can be added!
+
+
+	cout << zero << " " << one << " " << two << " " << three << " " << four << " " << five << " " << six << " " << seven << " " << eight << endl;
+
 
 }
 
